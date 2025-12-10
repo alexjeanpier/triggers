@@ -1,847 +1,985 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Triggers en Bases de Datos - Proyecto Académico</title>
+    <title>Triggers SQL Master - Proyecto Completo</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
     <style>
         :root {
-            --primary-color: #1a237e;
-            --secondary-color: #4a148c;
-            --accent-color: #ff5722;
-            --light-color: #f5f5f5;
-            --dark-color: #333;
-            --success-color: #4caf50;
-            --warning-color: #ff9800;
-            --danger-color: #f44336;
+            --primary: #1a237e; --secondary: #4a148c; --accent: #ff5722;
+            --nw-color: #2196f3; --pb-color: #9c27b0;
+            --bg: #f4f6f8; --card: #ffffff; --text: #2c3e50;
+            --code-bg: #1e1e1e; --border: #e0e0e0;
+        }
+        [data-theme="dark"] {
+            --primary: #5c6bc0; --secondary: #7e57c2;
+            --bg: #0f172a; --card: #1e293b; --text: #e2e8f0;
+            --code-bg: #0d1117; --border: #334155;
         }
         
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Poppins', sans-serif; background: var(--bg); color: var(--text); transition: 0.3s; padding-bottom: 60px; }
         
-        body {
-            font-family: 'Roboto', sans-serif;
-            line-height: 1.6;
-            color: var(--dark-color);
-            background-color: #f9f9f9;
-        }
-        
-        .container {
-            width: 100%;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 20px;
-        }
-        
-        /* Header Styles */
+        /* Header */
         header {
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-            color: white;
-            padding: 20px 0;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            position: relative;
-            overflow: hidden;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white; padding: 40px 0; text-align: center; position: relative;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
         }
-        
-        .header-content {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-            position: relative;
-            z-index: 2;
+        .header-content h1 { font-weight: 800; font-size: 2.2rem; margin: 10px 0; }
+        .controls { position: absolute; top: 20px; right: 20px; display: flex; gap: 10px; }
+        .btn-icon { background: rgba(255,255,255,0.2); border: none; color: white; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; }
+        .btn-icon:hover { background: rgba(255,255,255,0.4); transform: rotate(15deg); }
+
+        /* Dashboard */
+        .container { max-width: 1300px; margin: 0 auto; padding: 0 20px; }
+        .dashboard {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;
+            margin: -30px auto 40px; position: relative; z-index: 10;
         }
-        
-        .university-badge {
-            display: flex;
-            align-items: center;
-            margin-bottom: 15px;
+        .stat-card {
+            background: var(--card); padding: 25px; border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08); display: flex; justify-content: space-between; align-items: center;
         }
-        
-        .university-badge i {
-            font-size: 2.5rem;
-            margin-right: 15px;
-            color: var(--accent-color);
+        .stat-val { font-size: 2.2rem; font-weight: 800; color: var(--primary); }
+        .chart-box { width: 70px; height: 70px; }
+
+        /* DB Selector */
+        .db-selector { display: flex; justify-content: center; gap: 20px; margin-bottom: 30px; }
+        .pill-btn {
+            padding: 12px 40px; border-radius: 50px; border: none; font-weight: 600; cursor: pointer;
+            opacity: 0.6; transition: 0.3s; display: flex; align-items: center; gap: 10px; font-size: 1.1rem;
+            background: #ccc; color: #555;
         }
-        
-        .header-title h1 {
-            font-family: 'Poppins', sans-serif;
-            font-size: 2.2rem;
-            margin-bottom: 10px;
-            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
+        .pill-btn.active { opacity: 1; transform: scale(1.05); color: white; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+        .pill-btn.nw.active { background: var(--nw-color); }
+        .pill-btn.pb.active { background: var(--pb-color); }
+
+        /* Code Editor */
+        .code-panel {
+            background: var(--card); border-radius: 12px; overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1); margin-top: 20px; display: none;
         }
+        .code-panel.active { display: block; animation: fadeInUp 0.5s; }
         
-        .header-title h2 {
-            font-size: 1.5rem;
-            font-weight: 400;
-            margin-bottom: 5px;
+        .panel-header {
+            background: #212121; padding: 0; display: flex; justify-content: space-between; align-items: center; overflow-x: auto;
         }
-        
-        .header-title h3 {
-            font-size: 1.2rem;
-            font-weight: 300;
-            margin-bottom: 20px;
-        }
-        
-        /* Main Content */
-        .main-content {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 30px;
-            padding: 30px 0;
-        }
-        
-        .card {
-            background-color: white;
-            border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
-            padding: 25px;
-            transition: transform 0.3s, box-shadow 0.3s;
-        }
-        
-        .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.12);
-        }
-        
-        .card-title {
-            font-family: 'Poppins', sans-serif;
-            font-size: 1.5rem;
-            color: var(--primary-color);
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid var(--accent-color);
-            display: flex;
-            align-items: center;
-        }
-        
-        .card-title i {
-            margin-right: 10px;
-            color: var(--accent-color);
-        }
-        
-        .info-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-        }
-        
-        .info-item {
-            background-color: #f8f9fa;
-            border-left: 4px solid var(--primary-color);
-            padding: 15px;
-            border-radius: 0 8px 8px 0;
-        }
-        
-        .info-item h4 {
-            color: var(--secondary-color);
-            margin-bottom: 8px;
-            font-size: 1.1rem;
-        }
-        
-        /* Triggers Section */
-        .triggers-section {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 25px;
-        }
-        
-        .trigger-card {
-            border: 1px solid #e0e0e0;
-            border-radius: 8px;
-            overflow: hidden;
-            transition: all 0.3s;
-        }
-        
-        .trigger-header {
-            background-color: #e8eaf6;
-            padding: 15px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            cursor: pointer;
-        }
-        
-        .trigger-header:hover {
-            background-color: #d1d9ff;
-        }
-        
-        .trigger-header h4 {
-            color: var(--primary-color);
-            font-size: 1.2rem;
-        }
-        
-        .trigger-body {
-            padding: 0 15px;
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.5s ease, padding 0.5s ease;
-        }
-        
-        .trigger-body.active {
-            padding: 15px;
-            max-height: 1000px;
-        }
-        
-        .trigger-type {
-            display: inline-block;
-            padding: 4px 10px;
-            background-color: var(--secondary-color);
-            color: white;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            font-weight: 500;
-        }
-        
-        .trigger-details {
-            margin-top: 15px;
-        }
-        
-        .trigger-details p {
-            margin-bottom: 10px;
-        }
-        
-        .code-block {
-            background-color: #2d2d2d;
-            color: #f8f8f2;
-            padding: 15px;
-            border-radius: 5px;
-            font-family: 'Courier New', monospace;
-            font-size: 0.9rem;
-            overflow-x: auto;
-            margin: 15px 0;
-        }
-        
-        .sql-keyword {
-            color: #f92672;
-        }
-        
-        .sql-function {
-            color: #66d9ef;
-        }
-        
-        .sql-string {
-            color: #e6db74;
-        }
-        
-        /* Team Section */
-        .team-section {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-        }
-        
-        .team-member {
-            text-align: center;
-            padding: 20px;
-            background-color: #f0f2f5;
-            border-radius: 8px;
-        }
-        
-        .member-icon {
-            font-size: 3rem;
-            color: var(--primary-color);
-            margin-bottom: 15px;
-        }
-        
-        /* Footer */
-        footer {
-            background-color: var(--dark-color);
-            color: white;
-            padding: 30px 0;
-            margin-top: 40px;
-        }
-        
-        .footer-content {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-        }
-        
-        .project-links {
-            display: flex;
-            gap: 30px;
-            margin: 20px 0;
-        }
-        
-        .project-link {
-            display: flex;
-            align-items: center;
-            color: white;
-            text-decoration: none;
-            padding: 10px 20px;
-            background-color: rgba(255, 255, 255, 0.1);
-            border-radius: 5px;
-            transition: background-color 0.3s;
-        }
-        
-        .project-link:hover {
-            background-color: rgba(255, 255, 255, 0.2);
-        }
-        
-        .project-link i {
-            margin-right: 8px;
-        }
-        
-        /* Tabs for database selection */
-        .tabs {
-            display: flex;
-            margin-bottom: 20px;
-            border-bottom: 2px solid #e0e0e0;
-        }
-        
+        .tabs { display: flex; }
         .tab {
-            padding: 12px 25px;
-            cursor: pointer;
-            font-weight: 500;
-            color: #666;
-            transition: all 0.3s;
+            padding: 15px 25px; background: transparent; border: none; color: #aaa; cursor: pointer;
+            font-family: 'Fira Code', monospace; font-size: 0.9rem; transition: 0.2s; white-space: nowrap;
             border-bottom: 3px solid transparent;
         }
+        .tab:hover { color: white; background: rgba(255,255,255,0.05); }
+        .tab.active { color: white; background: #1e1e1e; border-bottom-color: var(--accent); }
         
-        .tab.active {
-            color: var(--primary-color);
-            border-bottom: 3px solid var(--accent-color);
+        .actions { display: flex; gap: 10px; padding-right: 15px; }
+        .action-btn {
+            padding: 6px 15px; border-radius: 4px; border: 1px solid #444; background: #333; color: #ddd;
+            cursor: pointer; font-size: 0.85rem; display: flex; align-items: center; gap: 6px;
         }
+        .action-btn:hover { background: #444; color: white; }
+        .action-btn.download { border-color: #2196f3; color: #2196f3; background: rgba(33, 150, 243, 0.1); }
+
+        /* Code Content */
+        .editor-content { background: var(--code-bg); padding: 0; position: relative; }
+        .code-block { display: none; padding: 20px; }
+        .code-block.active { display: block; }
         
-        .tab-content {
-            display: none;
+        /* Line Numbers & Syntax */
+        .code-wrapper { display: flex; font-family: 'Fira Code', monospace; font-size: 13px; line-height: 1.6; }
+        .line-numbers { 
+            text-align: right; color: #555; padding-right: 15px; margin-right: 15px; 
+            border-right: 1px solid #333; user-select: none; opacity: 0.5; 
         }
+        pre { color: #d4d4d4; white-space: pre-wrap; margin: 0; width: 100%; overflow-x: auto; }
         
-        .tab-content.active {
-            display: block;
+        /* Syntax Colors (Applied via JS) */
+        .k { color: #569cd6; font-weight: bold; } /* Keywords */
+        .s { color: #ce9178; } /* Strings */
+        .c { color: #6a9955; font-style: italic; } /* Comments */
+        .f { color: #dcdcaa; } /* Functions */
+        .n { color: #b5cea8; } /* Numbers */
+
+        /* 3D Trigger Cards */
+        .trigger-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; margin-bottom: 30px; perspective: 1000px; }
+        .trigger-card {
+            background: var(--card); padding: 20px; border-radius: 12px; cursor: pointer;
+            border-left: 5px solid transparent; transition: transform 0.1s; box-shadow: 0 5px 15px rgba(0,0,0,0.05);
         }
+        .trigger-card.nw { border-color: var(--nw-color); }
+        .trigger-card.pb { border-color: var(--pb-color); }
+        .trigger-head { display: flex; align-items: center; gap: 15px; margin-bottom: 10px; }
+        .icon-box { width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; }
+        .icon-box.nw { background: var(--nw-color); }
+        .icon-box.pb { background: var(--pb-color); }
+
+        /* Footer & Credits */
+        .team { margin-top: 50px; text-align: center; padding: 40px 20px; border-top: 1px solid var(--border); }
+        .team-grid { display: flex; justify-content: center; gap: 30px; flex-wrap: wrap; margin-top: 20px; }
+        .member { background: var(--card); padding: 20px; border-radius: 12px; width: 220px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
         
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            .header-title h1 {
-                font-size: 1.8rem;
-            }
-            
-            .info-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .team-section {
-                grid-template-columns: 1fr;
-            }
-            
-            .project-links {
-                flex-direction: column;
-                gap: 15px;
-            }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Print Optimization */
+        @media print {
+            header, .controls, .db-selector, .dashboard, .actions, .team { display: none !important; }
+            body { background: white; color: black; }
+            .code-panel { box-shadow: none; border: 1px solid #ccc; display: block !important; margin: 0; }
+            .editor-content, .panel-header { background: white !important; color: black !important; }
+            pre { color: black !important; white-space: pre-wrap; }
+            .line-numbers { border-right: 1px solid #ccc; }
+            .tab { border: 1px solid #ccc; margin-right: 5px; color: black !important; }
+            .code-block { display: block !important; border-bottom: 1px dashed #999; page-break-inside: avoid; }
         }
     </style>
 </head>
 <body>
-    <!-- Header Section -->
+
     <header>
+        <div class="controls">
+            <button class="btn-icon" onclick="toggleTheme()" title="Cambiar Tema"><i class="fas fa-adjust"></i></button>
+            <button class="btn-icon" onclick="window.print()" title="Imprimir/PDF"><i class="fas fa-print"></i></button>
+        </div>
         <div class="container">
+            <div style="display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 15px;">
+                <i class="fas fa-university" style="font-size: 2.5rem; color: #ffcc80;"></i>
+                <div style="text-align: left;">
+                    <h4 style="margin: 0; opacity: 0.9;">UNIVERSIDAD ANDINA DEL CUSCO</h4>
+                    <small>FACULTAD DE INGENIERÍA Y ARQUITECTURA</small>
+                </div>
+            </div>
             <div class="header-content">
-                <div class="university-badge">
-                    <i class="fas fa-university"></i>
-                    <div>
-                        <h2>UNIVERSIDAD ANDINA DEL CUSCO</h2>
-                        <h3>FACULTAD DE INGENIERÍA Y ARQUITECTURA</h3>
-                    </div>
-                </div>
-                <div class="header-title">
-                    <h1>Triggers en Bases de Datos</h1>
-                    <h2>Taller 3.4 - Modelado de Base de Datos</h2>
-                    <h3>"Año de la recuperación y consolidación de la economía peruana"</h3>
-                </div>
+                <h1>Triggers en Bases de Datos</h1>
+                <p>Taller 3.4 - Implementación SQL Completa</p>
             </div>
         </div>
     </header>
 
-    <!-- Main Content -->
     <div class="container">
-        <div class="main-content">
-            <!-- Introduction Section -->
-            <section class="card">
-                <h2 class="card-title"><i class="fas fa-database"></i> Introducción al Proyecto</h2>
-                <p>Este proyecto académico implementa disparadores (triggers) en SQL Server para automatizar procesos, reforzar la integridad de datos y proporcionar mecanismos de auditoría en las bases de datos Northwind y Pubs.</p>
-                
-                <div class="info-grid" style="margin-top: 20px;">
-                    <div class="info-item">
-                        <h4>Objetivo General</h4>
-                        <p>Desarrollar e implementar un conjunto de triggers que automaticen procesos, controlen reglas de negocio y auditen eventos en las bases de datos.</p>
-                    </div>
-                    <div class="info-item">
-                        <h4>Base de Datos Northwind</h4>
-                        <p>Base de datos de ejemplo de Microsoft que simula una empresa de ventas con productos, clientes, pedidos y empleados.</p>
-                    </div>
-                    <div class="info-item">
-                        <h4>Base de Datos Pubs</h4>
-                        <p>Base de datos de ejemplo que simula una editorial de libros con autores, títulos, publicaciones y ventas.</p>
-                    </div>
-                </div>
-            </section>
+        <div class="dashboard">
+            <div class="stat-card">
+                <div><div class="stat-val">14</div><div style="opacity:0.7">Triggers Totales</div></div>
+                <div class="chart-box"><canvas id="triggersChart"></canvas></div>
+            </div>
+            <div class="stat-card">
+                <div><div class="stat-val">12</div><div style="opacity:0.7">Pruebas Unitarias</div></div>
+                <div style="font-size: 2rem; color: #4caf50;"><i class="fas fa-vial"></i></div>
+            </div>
+            <div class="stat-card">
+                <div><div class="stat-val">100%</div><div style="opacity:0.7">Código Original</div></div>
+                <div style="font-size: 2rem; color: var(--accent);"><i class="fas fa-code"></i></div>
+            </div>
+        </div>
 
-            <!-- Team Information -->
-            <section class="card">
-                <h2 class="card-title"><i class="fas fa-users"></i> Equipo de Trabajo</h2>
-                <div class="team-section">
-                    <div class="team-member">
-                        <div class="member-icon">
-                            <i class="fas fa-user-graduate"></i>
-                        </div>
-                        <h3>Docente</h3>
-                        <h4>Espetia Huamanga Hugo</h4>
-                        <p>Modelado de Base de Datos</p>
-                    </div>
-                    <div class="team-member">
-                        <div class="member-icon">
-                            <i class="fas fa-user-graduate"></i>
-                        </div>
-                        <h3>Alumno</h3>
-                        <h4>Andia Palomino Rodrigo</h4>
-                        <p>Código: 023100172b</p>
-                    </div>
-                    <div class="team-member">
-                        <div class="member-icon">
-                            <i class="fas fa-user-graduate"></i>
-                        </div>
-                        <h3>Alumno</h3>
-                        <h4>Quispe Sierra Alex Jeanpier</h4>
-                        <p>Código: 022200823f</p>
-                    </div>
-                </div>
-            </section>
+        <div class="db-selector">
+            <button class="pill-btn nw active" onclick="switchDB('nw')"><i class="fas fa-store"></i> Northwind</button>
+            <button class="pill-btn pb" onclick="switchDB('pb')"><i class="fas fa-book"></i> Pubs</button>
+        </div>
 
-            <!-- Database Triggers Section -->
-            <section class="card">
-                <h2 class="card-title"><i class="fas fa-code"></i> Triggers Implementados</h2>
-                
-                <!-- Tabs for database selection -->
-                <div class="tabs">
-                    <div class="tab active" onclick="showTab('northwind')">Northwind (5 Triggers)</div>
-                    <div class="tab" onclick="showTab('pubs')">Pubs (5 Triggers)</div>
+        <div id="nw-section" class="db-section">
+            <div class="trigger-grid">
+                <div class="trigger-card nw" onclick="openTab('nw', 't2')">
+                    <div class="trigger-head"><div class="icon-box nw"><i class="fas fa-box"></i></div><strong>Stock Control</strong></div>
+                    <small>Auto-actualización de inventario.</small>
                 </div>
-                
-                <!-- Northwind Triggers -->
-                <div id="northwind-tab" class="tab-content active">
-                    <div class="triggers-section">
-                        <!-- Trigger 1 -->
-                        <div class="trigger-card">
-                            <div class="trigger-header" onclick="toggleTrigger('trigger1')">
-                                <h4>1. Actualización Automática de Stock</h4>
-                                <span class="trigger-type">AFTER INSERT</span>
-                            </div>
-                            <div id="trigger1" class="trigger-body">
-                                <div class="trigger-details">
-                                    <p><strong>Tabla:</strong> Order Details</p>
-                                    <p><strong>Propósito:</strong> Descuenta automáticamente las unidades compradas del inventario cuando se registra un nuevo detalle de orden.</p>
-                                    <p><strong>Lógica:</strong> Después de insertar un registro en Order Details, se actualiza el stock del producto correspondiente.</p>
-                                    <div class="code-block">
-                                        <pre><code><span class="sql-keyword">CREATE TRIGGER</span> trg_UpdateStock
-<span class="sql-keyword">ON</span> [Order Details]
-<span class="sql-keyword">AFTER INSERT</span>
-<span class="sql-keyword">AS</span>
-<span class="sql-keyword">BEGIN</span>
-    <span class="sql-keyword">UPDATE</span> Products
-    <span class="sql-keyword">SET</span> UnitsInStock = UnitsInStock - i.Quantity
-    <span class="sql-keyword">FROM</span> Products p
-    <span class="sql-keyword">INNER JOIN</span> inserted i <span class="sql-keyword">ON</span> p.ProductID = i.ProductID;
-<span class="sql-keyword">END</span>;</code></pre>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Trigger 2 -->
-                        <div class="trigger-card">
-                            <div class="trigger-header" onclick="toggleTrigger('trigger2')">
-                                <h4>2. Prevención de Eliminación de Órdenes</h4>
-                                <span class="trigger-type">INSTEAD OF DELETE</span>
-                            </div>
-                            <div id="trigger2" class="trigger-body">
-                                <div class="trigger-details">
-                                    <p><strong>Tabla:</strong> Orders</p>
-                                    <p><strong>Propósito:</strong> Evita la eliminación accidental de órdenes para preservar la integridad histórica.</p>
-                                    <p><strong>Lógica:</strong> Intercepta intentos de DELETE y muestra un mensaje en lugar de ejecutar la eliminación.</p>
-                                    <div class="code-block">
-                                        <pre><code><span class="sql-keyword">CREATE TRIGGER</span> trg_PreventDeleteOrder
-<span class="sql-keyword">ON</span> Orders
-<span class="sql-keyword">INSTEAD OF DELETE</span>
-<span class="sql-keyword">AS</span>
-<span class="sql-keyword">BEGIN</span>
-    <span class="sql-function">PRINT</span> <span class="sql-string">'No está permitido eliminar órdenes. Contacte al administrador.'</span>;
-<span class="sql-keyword">END</span>;</code></pre>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Trigger 3 -->
-                        <div class="trigger-card">
-                            <div class="trigger-header" onclick="toggleTrigger('trigger3')">
-                                <h4>3. Auditoría de Cambios de Precios</h4>
-                                <span class="trigger-type">AFTER UPDATE</span>
-                            </div>
-                            <div id="trigger3" class="trigger-body">
-                                <div class="trigger-details">
-                                    <p><strong>Tabla:</strong> Products</p>
-                                    <p><strong>Propósito:</strong> Registra cambios de precio en una tabla de auditoría para rastreo.</p>
-                                    <p><strong>Lógica:</strong> Detecta cambios en UnitPrice y los registra en Products_Audit con fecha y valores antiguo/nuevo.</p>
-                                    <div class="code-block">
-                                        <pre><code><span class="sql-keyword">CREATE TRIGGER</span> trg_AuditPriceChange
-<span class="sql-keyword">ON</span> Products
-<span class="sql-keyword">AFTER UPDATE</span>
-<span class="sql-keyword">AS</span>
-<span class="sql-keyword">BEGIN</span>
-    <span class="sql-keyword">IF</span> <span class="sql-function">UPDATE</span>(UnitPrice)
-    <span class="sql-keyword">BEGIN</span>
-        <span class="sql-keyword">INSERT INTO</span> Products_Audit (ProductID, OldPrice, NewPrice, ChangeDate)
-        <span class="sql-keyword">SELECT</span> d.ProductID, d.UnitPrice, i.UnitPrice, <span class="sql-function">GETDATE</span>()
-        <span class="sql-keyword">FROM</span> deleted d
-        <span class="sql-keyword">JOIN</span> inserted i <span class="sql-keyword">ON</span> d.ProductID = i.ProductID;
-    <span class="sql-keyword">END</span>
-<span class="sql-keyword">END</span>;</code></pre>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Trigger 4 -->
-                        <div class="trigger-card">
-                            <div class="trigger-header" onclick="toggleTrigger('trigger4')">
-                                <h4>4. Validación de Fecha de Envío</h4>
-                                <span class="trigger-type">AFTER INSERT, UPDATE</span>
-                            </div>
-                            <div id="trigger4" class="trigger-body">
-                                <div class="trigger-details">
-                                    <p><strong>Tabla:</strong> Orders</p>
-                                    <p><strong>Propósito:</strong> Garantiza que la fecha de envío nunca sea anterior a la fecha de orden.</p>
-                                    <p><strong>Lógica:</strong> Verifica la consistencia de fechas y revierte la transacción si hay inconsistencia.</p>
-                                    <div class="code-block">
-                                        <pre><code><span class="sql-keyword">CREATE TRIGGER</span> trg_ValidateDates
-<span class="sql-keyword">ON</span> Orders
-<span class="sql-keyword">AFTER INSERT, UPDATE</span>
-<span class="sql-keyword">AS</span>
-<span class="sql-keyword">BEGIN</span>
-    <span class="sql-keyword">IF EXISTS</span> (<span class="sql-keyword">SELECT</span> * <span class="sql-keyword">FROM</span> inserted <span class="sql-keyword">WHERE</span> ShippedDate < OrderDate)
-    <span class="sql-keyword">BEGIN</span>
-        <span class="sql-function">RAISERROR</span>(<span class="sql-string">'La fecha de envío no puede ser anterior a la fecha de la orden.'</span>, 16, 1);
-        <span class="sql-keyword">ROLLBACK TRANSACTION</span>;
-    <span class="sql-keyword">END</span>
-<span class="sql-keyword">END</span>;</code></pre>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Trigger 5 -->
-                        <div class="trigger-card">
-                            <div class="trigger-header" onclick="toggleTrigger('trigger5')">
-                                <h4>5. Estándar en Nombres de Clientes</h4>
-                                <span class="trigger-type">AFTER INSERT, UPDATE</span>
-                            </div>
-                            <div id="trigger5" class="trigger-body">
-                                <div class="trigger-details">
-                                    <p><strong>Tabla:</strong> Customers</p>
-                                    <p><strong>Propósito:</strong> Mantiene uniformidad convirtiendo CompanyName a mayúsculas.</p>
-                                    <p><strong>Lógica:</strong> Actualiza automáticamente el nombre de la empresa a mayúsculas después de insertar o actualizar.</p>
-                                    <div class="code-block">
-                                        <pre><code><span class="sql-keyword">CREATE TRIGGER</span> trg_UpperCaseCustomer
-<span class="sql-keyword">ON</span> Customers
-<span class="sql-keyword">AFTER INSERT, UPDATE</span>
-<span class="sql-keyword">AS</span>
-<span class="sql-keyword">BEGIN</span>
-    <span class="sql-keyword">UPDATE</span> Customers
-    <span class="sql-keyword">SET</span> CompanyName = <span class="sql-function">UPPER</span>(i.CompanyName)
-    <span class="sql-keyword">FROM</span> Customers c
-    <span class="sql-keyword">JOIN</span> inserted i <span class="sql-keyword">ON</span> c.CustomerID = i.CustomerID;
-<span class="sql-keyword">END</span>;</code></pre>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                <div class="trigger-card nw" onclick="openTab('nw', 't3')">
+                    <div class="trigger-head"><div class="icon-box nw"><i class="fas fa-tag"></i></div><strong>Audit Precios</strong></div>
+                    <small>Historial de cambios con %.</small>
+                </div>
+                <div class="trigger-card nw" onclick="openTab('nw', 't6')">
+                    <div class="trigger-head"><div class="icon-box nw"><i class="fas fa-calculator"></i></div><strong>Totalización</strong></div>
+                    <small>Cálculo automático de totales.</small>
+                </div>
+            </div>
+
+            <div class="code-panel active" id="nw-editor">
+                <div class="panel-header">
+                    <div class="tabs">
+                        <button class="tab active" onclick="switchCodeTab('nw', 't1')">Setup.sql</button>
+                        <button class="tab" onclick="switchCodeTab('nw', 't2')">Triggers.sql</button>
+                        <button class="tab" onclick="switchCodeTab('nw', 't3')">Demos.sql</button>
+                    </div>
+                    <div class="actions">
+                        <button class="action-btn download" onclick="downloadAllSQL('nw')"><i class="fas fa-download"></i> .SQL</button>
+                        <button class="action-btn" onclick="copyToClipboard(this)"><i class="far fa-copy"></i></button>
                     </div>
                 </div>
-                
-                <!-- Pubs Triggers -->
-                <div id="pubs-tab" class="tab-content">
-                    <div class="triggers-section">
-                        <!-- Trigger P1 -->
-                        <div class="trigger-card">
-                            <div class="trigger-header" onclick="toggleTrigger('triggerP1')">
-                                <h4>P1. Restricción de Regalías</h4>
-                                <span class="trigger-type">AFTER UPDATE</span>
-                            </div>
-                            <div id="triggerP1" class="trigger-body">
-                                <div class="trigger-details">
-                                    <p><strong>Tabla:</strong> titles</p>
-                                    <p><strong>Propósito:</strong> Evita que el porcentaje de regalías sea disminuido, protegiendo acuerdos contractuales.</p>
-                                    <p><strong>Lógica:</strong> Compara valores antiguos y nuevos de royalty, revierte si hay disminución.</p>
-                                    <div class="code-block">
-                                        <pre><code><span class="sql-keyword">CREATE TRIGGER</span> trg_CheckRoyalty
-<span class="sql-keyword">ON</span> titles
-<span class="sql-keyword">AFTER UPDATE</span>
-<span class="sql-keyword">AS</span>
-<span class="sql-keyword">BEGIN</span>
-    <span class="sql-keyword">IF EXISTS</span> (
-        <span class="sql-keyword">SELECT</span> * 
-        <span class="sql-keyword">FROM</span> inserted i 
-        <span class="sql-keyword">JOIN</span> deleted d <span class="sql-keyword">ON</span> i.title_id = d.title_id
-        <span class="sql-keyword">WHERE</span> i.royalty < d.royalty
+                <div class="editor-content">
+                    <div id="nw-t1" class="code-block active">
+<pre class="raw-sql">USE Northwind;
+GO
+
+-- =============================================
+-- 1. CREAR TABLAS AUXILIARES
+-- =============================================
+IF OBJECT_ID('ProductPriceAudit', 'U') IS NOT NULL DROP TABLE ProductPriceAudit;
+CREATE TABLE ProductPriceAudit (
+    AuditID INT IDENTITY(1,1) PRIMARY KEY,
+    ProductID INT,
+    ProductName NVARCHAR(40),
+    OldPrice MONEY,
+    NewPrice MONEY,
+    ChangePercentage DECIMAL(5,2),
+    ChangedBy NVARCHAR(100),
+    ChangeDate DATETIME DEFAULT GETDATE()
+);
+GO
+
+IF OBJECT_ID('EmployeeReportsToHistory', 'U') IS NOT NULL DROP TABLE EmployeeReportsToHistory;
+CREATE TABLE EmployeeReportsToHistory (
+    HistoryID INT IDENTITY(1,1) PRIMARY KEY,
+    EmployeeID INT,
+    EmployeeName NVARCHAR(100),
+    OldBossID INT,
+    OldBossName NVARCHAR(100),
+    NewBossID INT,
+    NewBossName NVARCHAR(100),
+    ChangeDate DATETIME DEFAULT GETDATE()
+);
+GO
+
+IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Orders') AND name = 'OrderTotal')
+    ALTER TABLE Orders ADD OrderTotal MONEY DEFAULT 0;
+GO</pre>
+                    </div>
+
+                    <div id="nw-t2" class="code-block">
+<pre class="raw-sql">-- =============================================
+-- 2. TRIGGER 1: Control de Stock
+-- =============================================
+IF EXISTS (SELECT * FROM sys.triggers WHERE name = 'trg_AutoUpdateStock') DROP TRIGGER trg_AutoUpdateStock;
+GO
+CREATE TRIGGER trg_AutoUpdateStock ON [Order Details] AFTER INSERT AS
+BEGIN
+    SET NOCOUNT ON;
+    UPDATE p SET p.UnitsInStock = p.UnitsInStock - i.Quantity
+    FROM Products p
+    INNER JOIN inserted i ON p.ProductID = i.ProductID
+    WHERE p.Discontinued = 0;
+END
+GO
+
+-- =============================================
+-- 3. TRIGGER 2: Auditoría de Precios
+-- =============================================
+IF EXISTS (SELECT * FROM sys.triggers WHERE name = 'trg_ProductPriceAudit') DROP TRIGGER trg_ProductPriceAudit;
+GO
+CREATE TRIGGER trg_ProductPriceAudit ON Products AFTER UPDATE AS
+BEGIN
+    SET NOCOUNT ON;
+    IF UPDATE(UnitPrice)
+    BEGIN
+        INSERT INTO ProductPriceAudit (ProductID, ProductName, OldPrice, NewPrice, ChangePercentage, ChangedBy)
+        SELECT d.ProductID, d.ProductName, d.UnitPrice, i.UnitPrice,
+               ROUND(((i.UnitPrice - d.UnitPrice) / NULLIF(d.UnitPrice, 0)) * 100, 2), SUSER_NAME()
+        FROM deleted d INNER JOIN inserted i ON d.ProductID = i.ProductID
+        WHERE d.UnitPrice <> i.UnitPrice;
+    END
+END
+GO
+
+-- =============================================
+-- 4. TRIGGER 3: Validación de Pedidos
+-- =============================================
+IF EXISTS (SELECT * FROM sys.triggers WHERE name = 'trg_OrderValidation') DROP TRIGGER trg_OrderValidation;
+GO
+CREATE TRIGGER trg_OrderValidation ON Orders AFTER INSERT, UPDATE AS
+BEGIN
+    SET NOCOUNT ON;
+    IF EXISTS (SELECT 1 FROM inserted WHERE ShippedDate < OrderDate AND ShippedDate IS NOT NULL)
+    BEGIN
+        RAISERROR('ERROR: Fecha envío anterior a fecha pedido', 16, 1);
+        ROLLBACK TRANSACTION;
+    END
+END
+GO
+
+-- =============================================
+-- 5. TRIGGER 4: Histórico de Jefes
+-- =============================================
+IF EXISTS (SELECT * FROM sys.triggers WHERE name = 'trg_EmployeeBossHistory') DROP TRIGGER trg_EmployeeBossHistory;
+GO
+CREATE TRIGGER trg_EmployeeBossHistory ON Employees AFTER UPDATE AS
+BEGIN
+    SET NOCOUNT ON;
+    IF UPDATE(ReportsTo)
+    BEGIN
+        INSERT INTO EmployeeReportsToHistory (EmployeeID, EmployeeName, OldBossID, OldBossName, NewBossID, NewBossName)
+        SELECT d.EmployeeID, d.FirstName + ' ' + d.LastName,
+               d.ReportsTo, (SELECT FirstName + ' ' + LastName FROM Employees WHERE EmployeeID = d.ReportsTo),
+               i.ReportsTo, (SELECT FirstName + ' ' + LastName FROM Employees WHERE EmployeeID = i.ReportsTo)
+        FROM deleted d INNER JOIN inserted i ON d.EmployeeID = i.EmployeeID
+        WHERE ISNULL(d.ReportsTo, -1) <> ISNULL(i.ReportsTo, -1);
+    END
+END
+GO
+
+-- =============================================
+-- 6. TRIGGER 5: Sistema de Totalización
+-- =============================================
+IF EXISTS (SELECT * FROM sys.triggers WHERE name = 'trg_OrderTotalSystem') DROP TRIGGER trg_OrderTotalSystem;
+GO
+CREATE TRIGGER trg_OrderTotalSystem ON [Order Details] AFTER INSERT, UPDATE, DELETE AS
+BEGIN
+    SET NOCOUNT ON;
+    UPDATE o SET o.OrderTotal = (
+        SELECT ROUND(SUM(od.UnitPrice * od.Quantity * (1 - od.Discount)), 2)
+        FROM [Order Details] od WHERE od.OrderID = o.OrderID
     )
-    <span class="sql-keyword">BEGIN</span>
-        <span class="sql-function">RAISERROR</span>(<span class="sql-string">'No se puede reducir el porcentaje de regalías.'</span>, 16, 1);
-        <span class="sql-keyword">ROLLBACK TRANSACTION</span>;
-    <span class="sql-keyword">END</span>
-<span class="sql-keyword">END</span>;</code></pre>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Trigger P2 -->
-                        <div class="trigger-card">
-                            <div class="trigger-header" onclick="toggleTrigger('triggerP2')">
-                                <h4>P2. Auditoría de Empleados Nuevos</h4>
-                                <span class="trigger-type">AFTER INSERT</span>
-                            </div>
-                            <div id="triggerP2" class="trigger-body">
-                                <div class="trigger-details">
-                                    <p><strong>Tabla:</strong> employee</p>
-                                    <p><strong>Propósito:</strong> Registra automáticamente cada nuevo empleado en una tabla de auditoría.</p>
-                                    <p><strong>Lógica:</strong> Inserta un registro en Employee_Log con la acción y fecha de ingreso.</p>
-                                    <div class="code-block">
-                                        <pre><code><span class="sql-keyword">CREATE TRIGGER</span> trg_NewEmployeeLog
-<span class="sql-keyword">ON</span> employee
-<span class="sql-keyword">AFTER INSERT</span>
-<span class="sql-keyword">AS</span>
-<span class="sql-keyword">BEGIN</span>
-    <span class="sql-keyword">INSERT INTO</span> Employee_Log (EmpID, Action, Date)
-    <span class="sql-keyword">SELECT</span> emp_id, <span class="sql-string">'Nuevo Ingreso'</span>, <span class="sql-function">GETDATE</span>()
-    <span class="sql-keyword">FROM</span> inserted;
-<span class="sql-keyword">END</span>;</code></pre>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Trigger P3 -->
-                        <div class="trigger-card">
-                            <div class="trigger-header" onclick="toggleTrigger('triggerP3')">
-                                <h4>P3. Eliminación en Cascada de Ventas</h4>
-                                <span class="trigger-type">INSTEAD OF DELETE</span>
-                            </div>
-                            <div id="triggerP3" class="trigger-body">
-                                <div class="trigger-details">
-                                    <p><strong>Tabla:</strong> titles</p>
-                                    <p><strong>Propósito:</strong> Elimina ventas asociadas antes de eliminar un título, evitando errores por llaves foráneas.</p>
-                                    <p><strong>Lógica:</strong> Primero elimina registros relacionados en sales, luego elimina el título.</p>
-                                    <div class="code-block">
-                                        <pre><code><span class="sql-keyword">CREATE TRIGGER</span> trg_DeleteTitleSales
-<span class="sql-keyword">ON</span> titles
-<span class="sql-keyword">INSTEAD OF DELETE</span>
-<span class="sql-keyword">AS</span>
-<span class="sql-keyword">BEGIN</span>
-    <span class="sql-keyword">DELETE FROM</span> sales 
-    <span class="sql-keyword">WHERE</span> title_id <span class="sql-keyword">IN</span> (<span class="sql-keyword">SELECT</span> title_id <span class="sql-keyword">FROM</span> deleted);
+    FROM Orders o
+    WHERE o.OrderID IN (SELECT OrderID FROM inserted UNION SELECT OrderID FROM deleted);
+END
+GO</pre>
+                    </div>
 
-    <span class="sql-keyword">DELETE FROM</span> titles 
-    <span class="sql-keyword">WHERE</span> title_id <span class="sql-keyword">IN</span> (<span class="sql-keyword">SELECT</span> title_id <span class="sql-keyword">FROM</span> deleted);
-<span class="sql-keyword">END</span>;</code></pre>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Trigger P4 -->
-                        <div class="trigger-card">
-                            <div class="trigger-header" onclick="toggleTrigger('triggerP4')">
-                                <h4>P4. Alerta por Stock Mínimo</h4>
-                                <span class="trigger-type">AFTER INSERT</span>
-                            </div>
-                            <div id="triggerP4" class="trigger-body">
-                                <div class="trigger-details">
-                                    <p><strong>Tabla:</strong> sales</p>
-                                    <p><strong>Propósito:</strong> Genera alerta cuando el stock baja de 10 unidades después de una venta.</p>
-                                    <p><strong>Lógica:</strong> Verifica el stock después de insertar una venta y muestra mensaje de alerta si es bajo.</p>
-                                    <div class="code-block">
-                                        <pre><code><span class="sql-keyword">CREATE TRIGGER</span> trg_StockAlert
-<span class="sql-keyword">ON</span> sales
-<span class="sql-keyword">AFTER INSERT</span>
-<span class="sql-keyword">AS</span>
-<span class="sql-keyword">BEGIN</span>
-    <span class="sql-keyword">IF EXISTS</span> (
-        <span class="sql-keyword">SELECT</span> * 
-        <span class="sql-keyword">FROM</span> titles t
-        <span class="sql-keyword">JOIN</span> inserted i <span class="sql-keyword">ON</span> t.title_id = i.title_id
-        <span class="sql-keyword">WHERE</span> t.stock < 10
-    )
-    <span class="sql-keyword">BEGIN</span>
-        <span class="sql-function">PRINT</span> <span class="sql-string">'ALERTA: El stock ha caído por debajo del mínimo permitido.'</span>;
-    <span class="sql-keyword">END</span>
-<span class="sql-keyword">END</span>;</code></pre>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Trigger P5 -->
-                        <div class="trigger-card">
-                            <div class="trigger-header" onclick="toggleTrigger('triggerP5')">
-                                <h4>P5. Asignación Automática de Fecha de Contratación</h4>
-                                <span class="trigger-type">INSTEAD OF INSERT</span>
-                            </div>
-                            <div id="triggerP5" class="trigger-body">
-                                <div class="trigger-details">
-                                    <p><strong>Tabla:</strong> employee</p>
-                                    <p><strong>Propósito:</strong> Asigna fecha actual si un empleado es insertado sin fecha de contratación.</p>
-                                    <p><strong>Lógica:</strong> Intercepta inserción y asigna GETDATE() si hire_date es NULL.</p>
-                                    <div class="code-block">
-                                        <pre><code><span class="sql-keyword">CREATE TRIGGER</span> trg_DefaultHireDate
-<span class="sql-keyword">ON</span> employee
-<span class="sql-keyword">INSTEAD OF INSERT</span>
-<span class="sql-keyword">AS</span>
-<span class="sql-keyword">BEGIN</span>
-    <span class="sql-keyword">INSERT INTO</span> employee (emp_id, fname, lname, hire_date)
-    <span class="sql-keyword">SELECT</span> emp_id, fname, lname,
-           <span class="sql-function">ISNULL</span>(hire_date, <span class="sql-function">GETDATE</span>())
-    <span class="sql-keyword">FROM</span> inserted;
-<span class="sql-keyword">END</span>;</code></pre>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                    <div id="nw-t3" class="code-block">
+<pre class="raw-sql">-- =============================================
+-- DEMOSTRACIÓN 1: TRIGGER DE STOCK
+-- =============================================
+SELECT '1. PRODUCTO ANTES' AS Info, ProductID, ProductName, UnitsInStock FROM Products WHERE ProductID = 17;
+
+DECLARE @Order1 INT;
+INSERT INTO Orders (CustomerID, EmployeeID, OrderDate, RequiredDate, Freight) VALUES ('ALFKI', 1, GETDATE(), DATEADD(day, 7, GETDATE()), 15.50);
+SET @Order1 = SCOPE_IDENTITY();
+
+INSERT INTO [Order Details] (OrderID, ProductID, UnitPrice, Quantity, Discount) VALUES (@Order1, 17, 39.00, 5, 0);
+
+SELECT '2. PRODUCTO DESPUÉS' AS Info, ProductID, ProductName, UnitsInStock FROM Products WHERE ProductID = 17;
+GO
+
+-- =============================================
+-- DEMOSTRACIÓN 2: TRIGGER DE AUDITORÍA
+-- =============================================
+SELECT '1. PRECIO ANTES' AS Info, ProductID, ProductName, UnitPrice FROM Products WHERE ProductID = 1;
+UPDATE Products SET UnitPrice = 25.00 WHERE ProductID = 1;
+SELECT '2. AUDITORÍA' AS Info, ProductID, ProductName, OldPrice, NewPrice, ChangePercentage FROM ProductPriceAudit WHERE ProductID = 1;
+GO
+
+-- =============================================
+-- DEMOSTRACIÓN 3: TRIGGER DE VALIDACIÓN
+-- =============================================
+SELECT '1. INTENTO FECHA INVÁLIDA' AS Info;
+BEGIN TRY
+    INSERT INTO Orders (CustomerID, OrderDate, ShippedDate, Freight) VALUES ('ALFKI', '2024-01-20', '2024-01-15', 25.00);
+END TRY
+BEGIN CATCH
+    SELECT '2. ERROR CAPTURADO' AS Info, ERROR_MESSAGE() AS Mensaje;
+END CATCH
+GO
+
+-- =============================================
+-- DEMOSTRACIÓN 4: TRIGGER DE HISTÓRICO
+-- =============================================
+SELECT '1. EMPLEADO ANTES' AS Info, EmployeeID, FirstName + ' ' + LastName AS Empleado, ReportsTo FROM Employees WHERE EmployeeID = 3;
+UPDATE Employees SET ReportsTo = 5 WHERE EmployeeID = 3;
+SELECT '2. HISTÓRICO' AS Info, EmployeeID, EmployeeName, OldBossName, NewBossName FROM EmployeeReportsToHistory WHERE EmployeeID = 3;
+GO
+
+-- =============================================
+-- DEMOSTRACIÓN 5: TRIGGER DE TOTALIZACIÓN
+-- =============================================
+DECLARE @Order2 INT;
+INSERT INTO Orders (CustomerID, EmployeeID, OrderDate, RequiredDate, Freight) VALUES ('ALFKI', 1, GETDATE(), DATEADD(day, 7, GETDATE()), 20.00);
+SET @Order2 = SCOPE_IDENTITY();
+
+SELECT '1. PEDIDO SIN PRODUCTOS' AS Info, OrderID, OrderTotal FROM Orders WHERE OrderID = @Order2;
+INSERT INTO [Order Details] (OrderID, ProductID, UnitPrice, Quantity, Discount) VALUES (@Order2, 11, 14.00, 10, 0);
+SELECT '2. PEDIDO CON PRODUCTOS' AS Info, OrderID, OrderTotal FROM Orders WHERE OrderID = @Order2;
+SELECT '3. DETALLE PEDIDO' AS Info, OrderID, ProductID, Quantity, UnitPrice, ROUND(UnitPrice * Quantity * (1 - Discount), 2) AS Subtotal FROM [Order Details] WHERE OrderID = @Order2;
+GO</pre>
                     </div>
                 </div>
-            </section>
+            </div>
+        </div>
 
-            <!-- Conclusions Section -->
-            <section class="card">
-                <h2 class="card-title"><i class="fas fa-check-circle"></i> Conclusiones del Proyecto</h2>
-                <div class="info-grid">
-                    <div class="info-item">
-                        <h4>Automatización Efectiva</h4>
-                        <p>Los triggers demostraron ser herramientas fundamentales para automatizar tareas complejas, reducir errores y hacer cumplir reglas de negocio.</p>
+        <div id="pb-section" class="db-section" style="display:none;">
+            <div class="trigger-grid">
+                <div class="trigger-card pb" onclick="openTab('pb', 't2')">
+                    <div class="trigger-head"><div class="icon-box pb"><i class="fas fa-chart-line"></i></div><strong>YTD Sales</strong></div>
+                    <small>Recálculo automático de ventas anuales.</small>
+                </div>
+                <div class="trigger-card pb" onclick="openTab('pb', 't2')">
+                    <div class="trigger-head"><div class="icon-box pb"><i class="fas fa-dollar-sign"></i></div><strong>Validate Price</strong></div>
+                    <small>Protección contra precios negativos.</small>
+                </div>
+                <div class="trigger-card pb" onclick="openTab('pb', 't2')">
+                    <div class="trigger-head"><div class="icon-box pb"><i class="fas fa-user-shield"></i></div><strong>Author Audit</strong></div>
+                    <small>Registro completo de acciones CRUD.</small>
+                </div>
+                <div class="trigger-card pb" onclick="openTab('pb', 't3')">
+                    <div class="trigger-head"><div class="icon-box pb"><i class="fas fa-percent"></i></div><strong>Royalties</strong></div>
+                    <small>Validación de porcentajes (0-100%).</small>
+                </div>
+            </div>
+
+            <div class="code-panel active" id="pb-editor">
+                <div class="panel-header">
+                    <div class="tabs">
+                        <button class="tab active" onclick="switchCodeTab('pb', 't1')">Setup.sql</button>
+                        <button class="tab" onclick="switchCodeTab('pb', 't2')">Triggers 1-3</button>
+                        <button class="tab" onclick="switchCodeTab('pb', 't3')">Triggers 4-6</button>
+                        <button class="tab" onclick="switchCodeTab('pb', 't4')">Triggers 7-9</button>
+                        <button class="tab" onclick="switchCodeTab('pb', 't5')">PRUEBAS.sql</button>
                     </div>
-                    <div class="info-item">
-                        <h4>Protección de Datos</h4>
-                        <p>Los triggers INSTEAD OF resultaron útiles para proteger información sensible y mantener la integridad referencial.</p>
-                    </div>
-                    <div class="info-item">
-                        <h4>Auditoría y Trazabilidad</h4>
-                        <p>El registro automatizado fortalece los mecanismos de control interno y permite rastrear cambios en los datos críticos.</p>
-                    </div>
-                    <div class="info-item">
-                        <h4>Control de Versiones</h4>
-                        <p>El uso de Git y GitHub permitió mantener un desarrollo ordenado con seguimiento y colaboración efectiva.</p>
+                    <div class="actions">
+                        <button class="action-btn download" onclick="downloadAllSQL('pb')"><i class="fas fa-download"></i> .SQL</button>
+                        <button class="action-btn" onclick="copyToClipboard(this)"><i class="far fa-copy"></i></button>
                     </div>
                 </div>
-            </section>
+                <div class="editor-content">
+                    <div id="pb-t1" class="code-block active">
+<pre class="raw-sql">/* ============================================= */
+/* TRIGGERS PARA LA BASE DE DATOS PUBS EXISTENTE */
+/* ============================================= */
+
+-- Verificar si la base de datos pubs existe
+IF NOT EXISTS (SELECT * FROM sys.databases WHERE name = 'pubs')
+BEGIN
+    PRINT 'La base de datos pubs no existe. Creándola primero...';
+    USE master;
+    ALTER DATABASE pubs SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
+    DROP DATABASE IF EXISTS pubs;
+    CREATE DATABASE pubs;
+    PRINT 'Base de datos pubs creada exitosamente.';
+    PRINT 'Ejecuta primero el script original de pubs para crear las tablas y datos.';
+    RETURN;
+END
+ELSE
+BEGIN
+    PRINT 'Base de datos pubs encontrada. Procediendo a crear triggers...';
+    USE pubs;
+END
+GO
+
+/* ============================================= */
+/* ELIMINAR TRIGGERS EXISTENTES                  */
+/* ============================================= */
+PRINT 'Eliminando triggers existentes...';
+IF OBJECT_ID('trg_update_ytd_sales', 'TR') IS NOT NULL DROP TRIGGER trg_update_ytd_sales;
+IF OBJECT_ID('trg_validate_title_price', 'TR') IS NOT NULL DROP TRIGGER trg_validate_title_price;
+IF OBJECT_ID('trg_authors_audit', 'TR') IS NOT NULL DROP TRIGGER trg_authors_audit;
+IF OBJECT_ID('trg_validate_royaltyper', 'TR') IS NOT NULL DROP TRIGGER trg_validate_royaltyper;
+IF OBJECT_ID('trg_price_history', 'TR') IS NOT NULL DROP TRIGGER trg_price_history;
+IF OBJECT_ID('trg_validate_discounts', 'TR') IS NOT NULL DROP TRIGGER trg_validate_discounts;
+IF OBJECT_ID('trg_prevent_publisher_delete', 'TR') IS NOT NULL DROP TRIGGER trg_prevent_publisher_delete;
+IF OBJECT_ID('trg_validate_employee_job', 'TR') IS NOT NULL DROP TRIGGER trg_validate_employee_job;
+IF OBJECT_ID('trg_calculate_total_royalty', 'TR') IS NOT NULL DROP TRIGGER trg_calculate_total_royalty;
+PRINT 'Todos los triggers anteriores eliminados.';
+GO
+
+/* ============================================= */
+/* CREAR TABLAS AUXILIARES                       */
+/* ============================================= */
+PRINT 'Creando tablas auxiliares para los triggers...';
+
+IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'authors_audit')
+BEGIN
+    CREATE TABLE authors_audit (
+        audit_id INT IDENTITY(1,1) PRIMARY KEY,
+        au_id VARCHAR(11),
+        action_type VARCHAR(10),
+        action_date DATETIME DEFAULT GETDATE(),
+        user_name VARCHAR(100) DEFAULT SYSTEM_USER,
+        notes VARCHAR(200)
+    );
+    PRINT 'Tabla authors_audit creada exitosamente.';
+END
+GO
+
+IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'price_history')
+BEGIN
+    CREATE TABLE price_history (
+        history_id INT IDENTITY(1,1) PRIMARY KEY,
+        title_id VARCHAR(6),
+        old_price MONEY,
+        new_price MONEY,
+        change_date DATETIME DEFAULT GETDATE(),
+        changed_by VARCHAR(100) DEFAULT SYSTEM_USER
+    );
+    PRINT 'Tabla price_history creada exitosamente.';
+END
+GO</pre>
+                    </div>
+
+                    <div id="pb-t2" class="code-block">
+<pre class="raw-sql">/* ============================================= */
+/* 1. TRIGGER: Actualizar Ventas Automáticamente */
+/* ============================================= */
+CREATE TRIGGER trg_update_ytd_sales ON sales AFTER INSERT AS
+BEGIN
+    SET NOCOUNT ON;
+    DECLARE @title_id VARCHAR(6);
+    DECLARE @qty INT;
+    DECLARE @old_sales INT;
+    DECLARE sales_cursor CURSOR FOR SELECT title_id, qty FROM inserted;
+    OPEN sales_cursor;
+    FETCH NEXT FROM sales_cursor INTO @title_id, @qty;
+    WHILE @@FETCH_STATUS = 0
+    BEGIN
+        SELECT @old_sales = ISNULL(ytd_sales, 0) FROM titles WHERE title_id = @title_id;
+        UPDATE titles SET ytd_sales = @old_sales + @qty WHERE title_id = @title_id;
+        PRINT 'Título ' + @title_id + ': Ventas actualizadas de ' + CAST(@old_sales AS VARCHAR) + ' a ' + CAST((@old_sales + @qty) AS VARCHAR);
+        FETCH NEXT FROM sales_cursor INTO @title_id, @qty;
+    END
+    CLOSE sales_cursor;
+    DEALLOCATE sales_cursor;
+END
+GO
+
+/* ============================================= */
+/* 2. TRIGGER: Validar Precios de Títulos        */
+/* ============================================= */
+CREATE TRIGGER trg_validate_title_price ON titles AFTER INSERT, UPDATE AS
+BEGIN
+    SET NOCOUNT ON;
+    IF EXISTS (SELECT 1 FROM inserted WHERE price < 0)
+    BEGIN
+        RAISERROR('ERROR: El precio no puede ser negativo.', 16, 1);
+        ROLLBACK TRANSACTION;
+        RETURN;
+    END
+    IF EXISTS (SELECT 1 FROM inserted WHERE advance < 0)
+    BEGIN
+        RAISERROR('ERROR: El avance no puede ser negativo.', 16, 1);
+        ROLLBACK TRANSACTION;
+        RETURN;
+    END
+    IF EXISTS (SELECT 1 FROM inserted WHERE royalty NOT BETWEEN 0 AND 100 AND royalty IS NOT NULL)
+    BEGIN
+        RAISERROR('ERROR: El royalty debe estar entre 0 y 100.', 16, 1);
+        ROLLBACK TRANSACTION;
+        RETURN;
+    END
+    PRINT 'Validación de precios completada exitosamente.';
+END
+GO
+
+/* ============================================= */
+/* 3. TRIGGER: Auditoría de Autores              */
+/* ============================================= */
+CREATE TRIGGER trg_authors_audit ON authors AFTER INSERT, UPDATE, DELETE AS
+BEGIN
+    SET NOCOUNT ON;
+    -- Inserciones
+    IF EXISTS (SELECT * FROM inserted) AND NOT EXISTS (SELECT * FROM deleted)
+    BEGIN
+        INSERT INTO authors_audit (au_id, action_type, notes)
+        SELECT au_id, 'INSERT', 'Nuevo autor: ' + au_fname + ' ' + au_lname FROM inserted;
+        PRINT 'Auditoría: Inserción registrada.';
+    END
+    -- Actualizaciones
+    IF EXISTS (SELECT * FROM inserted) AND EXISTS (SELECT * FROM deleted)
+    BEGIN
+        INSERT INTO authors_audit (au_id, action_type, notes)
+        SELECT i.au_id, 'UPDATE', 'Autor actualizado: ' + i.au_fname + ' ' + i.au_lname FROM inserted i;
+        PRINT 'Auditoría: Actualización registrada.';
+    END
+    -- Eliminaciones
+    IF EXISTS (SELECT * FROM deleted) AND NOT EXISTS (SELECT * FROM inserted)
+    BEGIN
+        INSERT INTO authors_audit (au_id, action_type, notes)
+        SELECT au_id, 'DELETE', 'Autor eliminado' FROM deleted;
+        PRINT 'Auditoría: Eliminación registrada.';
+    END
+END
+GO</pre>
+                    </div>
+
+                    <div id="pb-t3" class="code-block">
+<pre class="raw-sql">/* ============================================= */
+/* 4. TRIGGER: Validar Royalties en TitleAuthor  */
+/* ============================================= */
+CREATE TRIGGER trg_validate_royaltyper ON titleauthor AFTER INSERT, UPDATE AS
+BEGIN
+    SET NOCOUNT ON;
+    IF EXISTS (SELECT 1 FROM inserted WHERE royaltyper NOT BETWEEN 0 AND 100)
+    BEGIN
+        RAISERROR('ERROR: El porcentaje de regalías debe estar entre 0 y 100.', 16, 1);
+        ROLLBACK TRANSACTION;
+        RETURN;
+    END
+    DECLARE @title_id VARCHAR(6);
+    DECLARE cursor_titles CURSOR FOR SELECT DISTINCT title_id FROM inserted;
+    OPEN cursor_titles;
+    FETCH NEXT FROM cursor_titles INTO @title_id;
+    WHILE @@FETCH_STATUS = 0
+    BEGIN
+        DECLARE @total_royalty INT;
+        SELECT @total_royalty = SUM(royaltyper) FROM titleauthor WHERE title_id = @title_id;
+        IF @total_royalty > 100
+        BEGIN
+            RAISERROR('ERROR: Total de regalías para título %s = %d%%. No puede exceder 100%%.', 16, 1, @title_id, @total_royalty);
+            ROLLBACK TRANSACTION;
+            CLOSE cursor_titles;
+            DEALLOCATE cursor_titles;
+            RETURN;
+        END
+        PRINT 'Título ' + @title_id + ': Total royalties = ' + CAST(ISNULL(@total_royalty, 0) AS VARCHAR) + '%';
+        FETCH NEXT FROM cursor_titles INTO @title_id;
+    END
+    CLOSE cursor_titles;
+    DEALLOCATE cursor_titles;
+END
+GO
+
+/* ============================================= */
+/* 5. TRIGGER: Historial de Cambios de Precio    */
+/* ============================================= */
+CREATE TRIGGER trg_price_history ON titles AFTER UPDATE AS
+BEGIN
+    SET NOCOUNT ON;
+    INSERT INTO price_history (title_id, old_price, new_price)
+    SELECT d.title_id, d.price, i.price
+    FROM deleted d INNER JOIN inserted i ON d.title_id = i.title_id
+    WHERE (d.price <> i.price) OR (d.price IS NULL AND i.price IS NOT NULL) OR (d.price IS NOT NULL AND i.price IS NULL);
+    
+    DECLARE @count INT = @@ROWCOUNT;
+    IF @count > 0 PRINT 'Historial: ' + CAST(@count AS VARCHAR) + ' cambios de precio registrados.';
+END
+GO
+
+/* ============================================= */
+/* 6. TRIGGER: Validar Descuentos                */
+/* ============================================= */
+CREATE TRIGGER trg_validate_discounts ON discounts AFTER INSERT, UPDATE AS
+BEGIN
+    SET NOCOUNT ON;
+    IF EXISTS (SELECT 1 FROM inserted WHERE lowqty > highqty AND highqty IS NOT NULL)
+    BEGIN
+        RAISERROR('ERROR: lowqty no puede ser mayor que highqty.', 16, 1);
+        ROLLBACK TRANSACTION;
+        RETURN;
+    END
+    IF EXISTS (SELECT 1 FROM inserted WHERE discount NOT BETWEEN 0 AND 100)
+    BEGIN
+        RAISERROR('ERROR: El descuento debe estar entre 0 y 100 por ciento.', 16, 1);
+        ROLLBACK TRANSACTION;
+        RETURN;
+    END
+    PRINT 'Validación de descuentos completada.';
+END
+GO</pre>
+                    </div>
+
+                    <div id="pb-t4" class="code-block">
+<pre class="raw-sql">/* ============================================= */
+/* 7. TRIGGER: Prevenir Eliminación de Publishers*/
+/* ============================================= */
+CREATE TRIGGER trg_prevent_publisher_delete ON publishers INSTEAD OF DELETE AS
+BEGIN
+    SET NOCOUNT ON;
+    DECLARE @pub_id CHAR(4);
+    DECLARE @pub_name VARCHAR(40);
+    DECLARE @book_count INT;
+    DECLARE publisher_cursor CURSOR FOR SELECT d.pub_id, d.pub_name FROM deleted d;
+    OPEN publisher_cursor;
+    FETCH NEXT FROM publisher_cursor INTO @pub_id, @pub_name;
+    WHILE @@FETCH_STATUS = 0
+    BEGIN
+        SELECT @book_count = COUNT(*) FROM titles WHERE pub_id = @pub_id;
+        IF @book_count > 0
+        BEGIN
+            PRINT 'ADVERTENCIA: No se puede eliminar ' + @pub_name + ' (ID: ' + @pub_id + ') porque tiene ' + CAST(@book_count AS VARCHAR) + ' libros asociados.';
+        END
+        ELSE
+        BEGIN
+            DELETE FROM publishers WHERE pub_id = @pub_id;
+            PRINT 'Publisher ' + @pub_name + ' eliminado exitosamente.';
+        END
+        FETCH NEXT FROM publisher_cursor INTO @pub_id, @pub_name;
+    END
+    CLOSE publisher_cursor;
+    DEALLOCATE publisher_cursor;
+END
+GO
+
+/* ============================================= */
+/* 8. TRIGGER: Validar Empleados y Trabajos      */
+/* ============================================= */
+CREATE TRIGGER trg_validate_employee_job ON employee AFTER INSERT, UPDATE AS
+BEGIN
+    SET NOCOUNT ON;
+    DECLARE @job_id SMALLINT;
+    DECLARE @job_lvl TINYINT;
+    DECLARE @min_lvl TINYINT;
+    DECLARE @max_lvl TINYINT;
+    DECLARE @job_desc VARCHAR(50);
+    DECLARE emp_cursor CURSOR FOR
+    SELECT i.job_id, i.job_lvl, j.min_lvl, j.max_lvl, j.job_desc
+    FROM inserted i INNER JOIN jobs j ON i.job_id = j.job_id;
+    OPEN emp_cursor;
+    FETCH NEXT FROM emp_cursor INTO @job_id, @job_lvl, @min_lvl, @max_lvl, @job_desc;
+    WHILE @@FETCH_STATUS = 0
+    BEGIN
+        IF @job_lvl NOT BETWEEN @min_lvl AND @max_lvl
+        BEGIN
+            RAISERROR('ERROR: Nivel %d no válido para trabajo "%s" (rango: %d-%d).', 16, 1, @job_lvl, @job_desc, @min_lvl, @max_lvl);
+            ROLLBACK TRANSACTION;
+            CLOSE emp_cursor;
+            DEALLOCATE emp_cursor;
+            RETURN;
+        END
+        FETCH NEXT FROM emp_cursor INTO @job_id, @job_lvl, @min_lvl, @max_lvl, @job_desc;
+    END
+    CLOSE emp_cursor;
+    DEALLOCATE emp_cursor;
+    PRINT 'Validación de empleados completada.';
+END
+GO
+
+/* ============================================= */
+/* 9. TRIGGER: Calcular Royalty Total por Título */
+/* ============================================= */
+CREATE TRIGGER trg_calculate_total_royalty ON titleauthor AFTER INSERT, UPDATE, DELETE AS
+BEGIN
+    SET NOCOUNT ON;
+    DECLARE @title_id VARCHAR(6);
+    DECLARE cursor_titles CURSOR FOR
+        SELECT DISTINCT title_id FROM (SELECT title_id FROM inserted UNION SELECT title_id FROM deleted) AS affected_titles;
+    OPEN cursor_titles;
+    FETCH NEXT FROM cursor_titles INTO @title_id;
+    WHILE @@FETCH_STATUS = 0
+    BEGIN
+        DECLARE @total_royalty INT;
+        DECLARE @author_count INT;
+        SELECT @total_royalty = SUM(royaltyper), @author_count = COUNT(*) FROM titleauthor WHERE title_id = @title_id;
+        PRINT 'Título ' + @title_id + ': ' + CAST(@author_count AS VARCHAR) + ' autores, ' + 'Total royalties: ' + CAST(ISNULL(@total_royalty, 0) AS VARCHAR) + '%';
+        FETCH NEXT FROM cursor_titles INTO @title_id;
+    END
+    CLOSE cursor_titles;
+    DEALLOCATE cursor_titles;
+END
+GO</pre>
+                    </div>
+
+                    <div id="pb-t5" class="code-block">
+<pre class="raw-sql">/* ============================================= */
+/* PRUEBAS DE TRIGGERS - MOSTRANDO CAMBIOS       */
+/* ============================================= */
+USE pubs;
+GO
+
+PRINT '=== 1. PRUEBA: Actualizar ventas automáticamente ===';
+SELECT title_id, title, ytd_sales FROM titles WHERE title_id = 'PS2091';
+INSERT INTO sales (stor_id, ord_num, ord_date, qty, payterms, title_id) VALUES ('7066', 'TEST001', GETDATE(), 10, 'Net 30', 'PS2091');
+SELECT title_id, title, ytd_sales FROM titles WHERE title_id = 'PS2091';
+DELETE FROM sales WHERE ord_num = 'TEST001';
+GO
+
+PRINT '=== 2. PRUEBA: Auditoría de autores ===';
+SELECT COUNT(*) AS 'Total registros' FROM authors_audit;
+BEGIN TRY
+    INSERT INTO authors (au_id, au_lname, au_fname, phone, contract) VALUES ('999-99-9999', 'Prueba', 'Autor', '555-1234', 1);
+END TRY
+BEGIN CATCH PRINT 'Error: ' + ERROR_MESSAGE(); END CATCH
+UPDATE authors SET phone = '555-9999' WHERE au_id = '999-99-9999';
+DELETE FROM authors WHERE au_id = '999-99-9999';
+SELECT audit_id, action_type, au_id, notes, action_date FROM authors_audit ORDER BY audit_id;
+GO
+
+PRINT '=== 3. PRUEBA: Historial de cambios de precio ===';
+SELECT title_id, title, price FROM titles WHERE title_id = 'BU1032';
+UPDATE titles SET price = 25.99 WHERE title_id = 'BU1032';
+UPDATE titles SET price = 29.99 WHERE title_id = 'BU1032';
+UPDATE titles SET price = NULL WHERE title_id = 'BU1032';
+UPDATE titles SET price = 19.99 WHERE title_id = 'BU1032';
+SELECT history_id, title_id, old_price, new_price, change_date FROM price_history ORDER BY history_id;
+GO
+
+PRINT '=== 4. PRUEBA: Validar royalties ===';
+SELECT SUM(royaltyper) AS 'Total Royalties %' FROM titleauthor WHERE title_id = 'PC8888';
+BEGIN TRY
+    INSERT INTO titleauthor (au_id, title_id, au_ord, royaltyper) VALUES ('724-08-9931', 'PC8888', 3, 150);
+END TRY
+BEGIN CATCH PRINT '✓ Error esperado: ' + ERROR_MESSAGE(); END CATCH
+BEGIN TRY
+    INSERT INTO titleauthor (au_id, title_id, au_ord, royaltyper) VALUES ('724-08-9931', 'PC8888', 3, 20);
+END TRY
+BEGIN CATCH PRINT 'Error: ' + ERROR_MESSAGE(); END CATCH
+SELECT SUM(royaltyper) AS 'Total Royalties %' FROM titleauthor WHERE title_id = 'PC8888';
+DELETE FROM titleauthor WHERE au_id = '724-08-9931' AND title_id = 'PC8888';
+GO
+
+PRINT '=== 5. PRUEBA: Validar descuentos ===';
+BEGIN TRY
+    INSERT INTO discounts (discounttype, stor_id, lowqty, highqty, discount) VALUES ('Test Inválido', '7066', 10, 5, 15.0);
+END TRY
+BEGIN CATCH PRINT '✓ Error esperado: ' + ERROR_MESSAGE(); END CATCH
+BEGIN TRY
+    INSERT INTO discounts (discounttype, stor_id, lowqty, highqty, discount) VALUES ('Test Válido', '7066', 1, 10, 15.0);
+END TRY
+BEGIN CATCH PRINT 'Error: ' + ERROR_MESSAGE(); END CATCH
+DELETE FROM discounts WHERE discounttype = 'Test Válido';
+GO
+
+PRINT '=== 6. PRUEBA: Prevenir eliminación de publishers ===';
+BEGIN TRY
+    DELETE FROM publishers WHERE pub_id = '1389';
+END TRY
+BEGIN CATCH PRINT '✓ Error: ' + ERROR_MESSAGE(); END CATCH
+BEGIN TRY
+    INSERT INTO publishers (pub_id, pub_name, city, state, country) VALUES ('TEST', 'Publisher Test', 'Test City', 'TS', 'USA');
+    DELETE FROM publishers WHERE pub_id = 'TEST';
+    PRINT '✓ Publisher eliminado exitosamente';
+END TRY
+BEGIN CATCH PRINT 'Error: ' + ERROR_MESSAGE(); END CATCH
+GO
+
+PRINT '=== 7. PRUEBA: Validar niveles de empleados ===';
+BEGIN TRY
+    INSERT INTO employee (emp_id, fname, minit, lname, job_id, job_lvl, pub_id, hire_date) VALUES ('TEST001M', 'John', 'A', 'Doe', 1, 5, '0736', GETDATE());
+END TRY
+BEGIN CATCH PRINT '✓ Error esperado: ' + ERROR_MESSAGE(); END CATCH
+BEGIN TRY
+    INSERT INTO employee (emp_id, fname, minit, lname, job_id, job_lvl, pub_id, hire_date) VALUES ('TEST003M', 'Robert', 'C', 'Johnson', 5, 150, '0736', GETDATE());
+    PRINT '✓ Empleado insertado exitosamente';
+END TRY
+BEGIN CATCH PRINT 'Error: ' + ERROR_MESSAGE(); END CATCH
+GO</pre>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- Footer -->
-    <footer>
-        <div class="container">
-            <div class="footer-content">
-                <h3>Proyecto Académico - Triggers en Bases de Datos</h3>
-                <div class="project-links">
-                    <a href="#" class="project-link" id="github-link">
-                        <i class="fab fa-github"></i> Repositorio en GitHub
-                    </a>
-                    <a href="#" class="project-link" id="pages-link">
-                        <i class="fas fa-globe"></i> Infografía en GitHub Pages
-                    </a>
-                </div>
-                <p>© 2023 Universidad Andina del Cusco - Facultad de Ingeniería y Arquitectura</p>
-                <p style="margin-top: 10px; font-size: 0.9rem;">Taller 3.4 - Modelado de Base de Datos</p>
+    <div class="team">
+        <h3><i class="fas fa-users"></i> Equipo de Desarrollo</h3>
+        <div class="team-grid">
+            <div class="member">
+                <i class="fas fa-chalkboard-teacher" style="font-size: 2rem; color: var(--primary);"></i>
+                <p style="margin-top: 10px;"><strong>Docente:</strong> Espetia Huamanga Hugo</p>
+            </div>
+            <div class="member">
+                <i class="fas fa-user-graduate" style="font-size: 2rem; color: var(--text);"></i>
+                <p style="margin-top: 10px;"><strong>Andia Palomino Rodrigo</strong></p>
+                <small>023100172b</small>
+            </div>
+            <div class="member">
+                <i class="fas fa-user-graduate" style="font-size: 2rem; color: var(--text);"></i>
+                <p style="margin-top: 10px;"><strong>Quispe Sierra Alex Jeanpier</strong></p>
+                <small>022200823f</small>
             </div>
         </div>
-    </footer>
+    </div>
 
     <script>
-        // JavaScript para funcionalidad interactiva
-        
-        // Función para alternar entre pestañas Northwind y Pubs
-        function showTab(tabName) {
-            // Ocultar todas las pestañas y quitar clase active
-            document.querySelectorAll('.tab-content').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            
-            document.querySelectorAll('.tab').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            
-            // Mostrar la pestaña seleccionada
-            document.getElementById(tabName + '-tab').classList.add('active');
-            
-            // Activar la pestaña correspondiente
-            const tabs = document.querySelectorAll('.tab');
-            if (tabName === 'northwind') {
-                tabs[0].classList.add('active');
-            } else {
-                tabs[1].classList.add('active');
-            }
-        }
-        
-        // Función para expandir/contraer detalles del trigger
-        function toggleTrigger(triggerId) {
-            const triggerBody = document.getElementById(triggerId);
-            triggerBody.classList.toggle('active');
-        }
-        
-        // Simular clics en los enlaces del footer
-        document.getElementById('github-link').addEventListener('click', function(e) {
-            e.preventDefault();
-            alert('En un proyecto real, este enlace dirigiría al repositorio de GitHub.\n\nURL del repo: https://github.com/usuario/proyecto-triggers');
+        // --- 1. Gráficos ---
+        const ctx = document.getElementById('triggersChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Northwind (5)', 'Pubs (9)'],
+                datasets: [{
+                    data: [5, 9],
+                    backgroundColor: ['#2196f3', '#9c27b0'],
+                    borderWidth: 0
+                }]
+            },
+            options: { responsive: true, cutout: '75%', plugins: { legend: { display: false } } }
         });
-        
-        document.getElementById('pages-link').addEventListener('click', function(e) {
-            e.preventDefault();
-            alert('En un proyecto real, este enlace dirigiría a la infografía en GitHub Pages.\n\nURL: https://usuario.github.io/proyecto-triggers/');
-        });
-        
-        // Expandir automáticamente el primer trigger de cada base de datos
-        document.addEventListener('DOMContentLoaded', function() {
-            // Expandir el primer trigger de Northwind
-            setTimeout(() => {
-                document.getElementById('trigger1').classList.add('active');
-            }, 500);
-            
-            // Agregar interactividad adicional: resaltar código al pasar el mouse
-            const codeBlocks = document.querySelectorAll('.code-block');
-            codeBlocks.forEach(block => {
-                block.addEventListener('mouseenter', function() {
-                    this.style.transform = 'scale(1.01)';
-                    this.style.transition = 'transform 0.3s';
-                });
+
+        // --- 2. Números de Línea y Highlighting ---
+        function formatSQL() {
+            document.querySelectorAll('pre.raw-sql').forEach(pre => {
+                let code = pre.innerText;
+                // Syntax Highlighting simple (sin librerías pesadas)
+                code = code.replace(/(--.*)/g, '<span class="c">$1</span>') // Comentarios
+                           .replace(/\/\*[\s\S]*?\*\//g, '<span class="c">$&</span>') // Bloques comentario
+                           .replace(/'([^']*)'/g, '<span class="s">\'$1\'</span>') // Strings
+                           .replace(/\b(CREATE|TRIGGER|TABLE|PROCEDURE|VIEW|FUNCTION|DATABASE|USE|GO|IF|EXISTS|NOT|NULL|PRIMARY|KEY|IDENTITY|FOREIGN|REFERENCES|CONSTRAINT|DEFAULT|SET|DECLARE|SELECT|INSERT|UPDATE|DELETE|FROM|WHERE|AND|OR|JOIN|INNER|LEFT|RIGHT|OUTER|ON|GROUP|BY|ORDER|HAVING|AS|BEGIN|END|TRY|CATCH|TRANSACTION|ROLLBACK|COMMIT|PRINT|RAISERROR|RETURN|ELSE|WHILE|FETCH|NEXT|OPEN|CLOSE|DEALLOCATE|CURSOR|FOR|INTO|VALUES|TOP|DISTINCT|UNION)\b/gi, '<span class="k">$1</span>')
+                           .replace(/\b(INT|VARCHAR|NVARCHAR|CHAR|DECIMAL|MONEY|DATETIME|SMALLINT|TINYINT)\b/gi, '<span class="k">$1</span>')
+                           .replace(/\b(GETDATE|SUSER_NAME|ISNULL|ROUND|SUM|COUNT|CAST|ERROR_MESSAGE|OBJECT_ID|SCOPE_IDENTITY|DATEADD)\b/gi, '<span class="f">$1</span>');
+
+                // Añadir números de línea
+                const lines = code.split('\n').length;
+                let lineNumHtml = '<div class="line-numbers">';
+                for(let i=1; i<=lines; i++) lineNumHtml += `<div>${i}</div>`;
+                lineNumHtml += '</div>';
                 
-                block.addEventListener('mouseleave', function() {
-                    this.style.transform = 'scale(1)';
-                });
+                const wrapper = document.createElement('div');
+                wrapper.className = 'code-wrapper';
+                wrapper.innerHTML = lineNumHtml + `<pre>${code}</pre>`;
+                
+                pre.parentNode.replaceChild(wrapper, pre);
             });
-            
-            // Efecto de escritura para el título principal
-            const title = document.querySelector('.header-title h1');
-            const originalText = title.textContent;
-            title.textContent = '';
-            let i = 0;
-            
-            function typeWriter() {
-                if (i < originalText.length) {
-                    title.textContent += originalText.charAt(i);
-                    i++;
-                    setTimeout(typeWriter, 50);
-                }
-            }
-            
-            // Iniciar efecto de escritura después de un breve retraso
-            setTimeout(typeWriter, 1000);
+        }
+        window.onload = () => { formatSQL(); switchDB('nw'); };
+
+        // --- 3. Navegación ---
+        function switchDB(db) {
+            document.querySelectorAll('.db-section').forEach(el => el.style.display = 'none');
+            document.getElementById(db + '-section').style.display = 'block';
+            document.querySelectorAll('.pill-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelector(`.pill-btn.${db}`).classList.add('active');
+        }
+
+        function switchCodeTab(db, tabId) {
+            const editor = document.getElementById(db + '-editor');
+            editor.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            editor.querySelectorAll('.code-block').forEach(b => b.classList.remove('active'));
+            document.getElementById(db + '-' + tabId).classList.add('active');
+        }
+
+        function openTab(db, tabId) {
+            document.getElementById(db + '-editor').scrollIntoView({behavior: 'smooth'});
+            // Simular click
+            const btn = document.querySelector(`#${db}-editor .tab[onclick*="'${tabId}'"]`);
+            if(btn) btn.click();
+        }
+
+        // --- 4. Utilidades ---
+        function toggleTheme() {
+            const html = document.documentElement;
+            html.setAttribute('data-theme', html.getAttribute('data-theme') === 'light' ? 'dark' : 'light');
+        }
+
+        // Tilt 3D
+        document.querySelectorAll('.trigger-card').forEach(card => {
+            card.addEventListener('mousemove', e => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                card.style.transform = `perspective(1000px) rotateX(${(y - rect.height/2)/-10}deg) rotateY(${(x - rect.width/2)/10}deg) scale(1.02)`;
+            });
+            card.addEventListener('mouseleave', () => card.style.transform = 'none');
         });
+
+        // Copiar
+        function copyToClipboard(btn) {
+            const editor = btn.closest('.code-panel');
+            const activeBlock = editor.querySelector('.code-block.active pre');
+            navigator.clipboard.writeText(activeBlock.innerText).then(() => {
+                const icon = btn.querySelector('i');
+                icon.className = 'fas fa-check';
+                btn.style.color = '#4caf50';
+                confetti({ particleCount: 50, spread: 60, origin: { y: 0.6 } });
+                setTimeout(() => { icon.className = 'far fa-copy'; btn.style.color = ''; }, 2000);
+            });
+        }
+
+        // Descargar SQL Completo
+        function downloadAllSQL(db) {
+            let content = `-- Script Completo de Triggers para ${db.toUpperCase()}\n\n`;
+            const editor = document.getElementById(db + '-editor');
+            editor.querySelectorAll('.code-block pre').forEach((block, index) => {
+                content += block.innerText + "\n\nGO\n\n";
+            });
+            const blob = new Blob([content], { type: 'text/sql' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${db}_triggers_completo.sql`;
+            a.click();
+            window.URL.revokeObjectURL(url);
+        }
     </script>
 </body>
 </html>
