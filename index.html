@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Triggers en Bases de Datos - Proyecto Académico</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #1a237e;
+            --secondary-color: #4a148c;
+            --accent-color: #ff5722;
+            --light-color: #f5f5f5;
+            --dark-color: #333;
+            --success-color: #4caf50;
+            --warning-color: #ff9800;
+            --danger-color: #f44336;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Roboto', sans-serif;
+            line-height: 1.6;
+            color: var(--dark-color);
+            background-color: #f9f9f9;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        /* Header Styles */
+        header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 20px 0;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .university-badge {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .university-badge i {
+            font-size: 2.5rem;
+            margin-right: 15px;
+            color: var(--accent-color);
+        }
+        
+        .header-title h1 {
+            font-family: 'Poppins', sans-serif;
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
+        }
+        
+        .header-title h2 {
+            font-size: 1.5rem;
+            font-weight: 400;
+            margin-bottom: 5px;
+        }
+        
+        .header-title h3 {
+            font-size: 1.2rem;
+            font-weight: 300;
+            margin-bottom: 20px;
+        }
+        
+        /* Main Content */
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 30px;
+            padding: 30px 0;
+        }
+        
+        .card {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            padding: 25px;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.12);
+        }
+        
+        .card-title {
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.5rem;
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--accent-color);
+            display: flex;
+            align-items: center;
+        }
+        
+        .card-title i {
+            margin-right: 10px;
+            color: var(--accent-color);
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .info-item {
+            background-color: #f8f9fa;
+            border-left: 4px solid var(--primary-color);
+            padding: 15px;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .info-item h4 {
+            color: var(--secondary-color);
+            margin-bottom: 8px;
+            font-size: 1.1rem;
+        }
+        
+        /* Triggers Section */
+        .triggers-section {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 25px;
+        }
+        
+        .trigger-card {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            overflow: hidden;
+            transition: all 0.3s;
+        }
+        
+        .trigger-header {
+            background-color: #e8eaf6;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+        
+        .trigger-header:hover {
+            background-color: #d1d9ff;
+        }
+        
+        .trigger-header h4 {
+            color: var(--primary-color);
+            font-size: 1.2rem;
+        }
+        
+        .trigger-body {
+            padding: 0 15px;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease, padding 0.5s ease;
+        }
+        
+        .trigger-body.active {
+            padding: 15px;
+            max-height: 1000px;
+        }
+        
+        .trigger-type {
+            display: inline-block;
+            padding: 4px 10px;
+            background-color: var(--secondary-color);
+            color: white;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+        
+        .trigger-details {
+            margin-top: 15px;
+        }
+        
+        .trigger-details p {
+            margin-bottom: 10px;
+        }
+        
+        .code-block {
+            background-color: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            overflow-x: auto;
+            margin: 15px 0;
+        }
+        
+        .sql-keyword {
+            color: #f92672;
+        }
+        
+        .sql-function {
+            color: #66d9ef;
+        }
+        
+        .sql-string {
+            color: #e6db74;
+        }
+        
+        /* Team Section */
+        .team-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        
+        .team-member {
+            text-align: center;
+            padding: 20px;
+            background-color: #f0f2f5;
+            border-radius: 8px;
+        }
+        
+        .member-icon {
+            font-size: 3rem;
+            color: var(--primary-color);
+            margin-bottom: 15px;
+        }
+        
+        /* Footer */
+        footer {
+            background-color: var(--dark-color);
+            color: white;
+            padding: 30px 0;
+            margin-top: 40px;
+        }
+        
+        .footer-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+        
+        .project-links {
+            display: flex;
+            gap: 30px;
+            margin: 20px 0;
+        }
+        
+        .project-link {
+            display: flex;
+            align-items: center;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+        
+        .project-link:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+        
+        .project-link i {
+            margin-right: 8px;
+        }
+        
+        /* Tabs for database selection */
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        
+        .tab {
+            padding: 12px 25px;
+            cursor: pointer;
+            font-weight: 500;
+            color: #666;
+            transition: all 0.3s;
+            border-bottom: 3px solid transparent;
+        }
+        
+        .tab.active {
+            color: var(--primary-color);
+            border-bottom: 3px solid var(--accent-color);
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .header-title h1 {
+                font-size: 1.8rem;
+            }
+            
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .team-section {
+                grid-template-columns: 1fr;
+            }
+            
+            .project-links {
+                flex-direction: column;
+                gap: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header Section -->
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <div class="university-badge">
+                    <i class="fas fa-university"></i>
+                    <div>
+                        <h2>UNIVERSIDAD ANDINA DEL CUSCO</h2>
+                        <h3>FACULTAD DE INGENIERÍA Y ARQUITECTURA</h3>
+                    </div>
+                </div>
+                <div class="header-title">
+                    <h1>Triggers en Bases de Datos</h1>
+                    <h2>Taller 3.4 - Modelado de Base de Datos</h2>
+                    <h3>"Año de la recuperación y consolidación de la economía peruana"</h3>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="container">
+        <div class="main-content">
+            <!-- Introduction Section -->
+            <section class="card">
+                <h2 class="card-title"><i class="fas fa-database"></i> Introducción al Proyecto</h2>
+                <p>Este proyecto académico implementa disparadores (triggers) en SQL Server para automatizar procesos, reforzar la integridad de datos y proporcionar mecanismos de auditoría en las bases de datos Northwind y Pubs.</p>
+                
+                <div class="info-grid" style="margin-top: 20px;">
+                    <div class="info-item">
+                        <h4>Objetivo General</h4>
+                        <p>Desarrollar e implementar un conjunto de triggers que automaticen procesos, controlen reglas de negocio y auditen eventos en las bases de datos.</p>
+                    </div>
+                    <div class="info-item">
+                        <h4>Base de Datos Northwind</h4>
+                        <p>Base de datos de ejemplo de Microsoft que simula una empresa de ventas con productos, clientes, pedidos y empleados.</p>
+                    </div>
+                    <div class="info-item">
+                        <h4>Base de Datos Pubs</h4>
+                        <p>Base de datos de ejemplo que simula una editorial de libros con autores, títulos, publicaciones y ventas.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Team Information -->
+            <section class="card">
+                <h2 class="card-title"><i class="fas fa-users"></i> Equipo de Trabajo</h2>
+                <div class="team-section">
+                    <div class="team-member">
+                        <div class="member-icon">
+                            <i class="fas fa-user-graduate"></i>
+                        </div>
+                        <h3>Docente</h3>
+                        <h4>Espetia Huamanga Hugo</h4>
+                        <p>Modelado de Base de Datos</p>
+                    </div>
+                    <div class="team-member">
+                        <div class="member-icon">
+                            <i class="fas fa-user-graduate"></i>
+                        </div>
+                        <h3>Alumno</h3>
+                        <h4>Andia Palomino Rodrigo</h4>
+                        <p>Código: 023100172b</p>
+                    </div>
+                    <div class="team-member">
+                        <div class="member-icon">
+                            <i class="fas fa-user-graduate"></i>
+                        </div>
+                        <h3>Alumno</h3>
+                        <h4>Quispe Sierra Alex Jeanpier</h4>
+                        <p>Código: 022200823f</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Database Triggers Section -->
+            <section class="card">
+                <h2 class="card-title"><i class="fas fa-code"></i> Triggers Implementados</h2>
+                
+                <!-- Tabs for database selection -->
+                <div class="tabs">
+                    <div class="tab active" onclick="showTab('northwind')">Northwind (5 Triggers)</div>
+                    <div class="tab" onclick="showTab('pubs')">Pubs (5 Triggers)</div>
+                </div>
+                
+                <!-- Northwind Triggers -->
+                <div id="northwind-tab" class="tab-content active">
+                    <div class="triggers-section">
+                        <!-- Trigger 1 -->
+                        <div class="trigger-card">
+                            <div class="trigger-header" onclick="toggleTrigger('trigger1')">
+                                <h4>1. Actualización Automática de Stock</h4>
+                                <span class="trigger-type">AFTER INSERT</span>
+                            </div>
+                            <div id="trigger1" class="trigger-body">
+                                <div class="trigger-details">
+                                    <p><strong>Tabla:</strong> Order Details</p>
+                                    <p><strong>Propósito:</strong> Descuenta automáticamente las unidades compradas del inventario cuando se registra un nuevo detalle de orden.</p>
+                                    <p><strong>Lógica:</strong> Después de insertar un registro en Order Details, se actualiza el stock del producto correspondiente.</p>
+                                    <div class="code-block">
+                                        <pre><code><span class="sql-keyword">CREATE TRIGGER</span> trg_UpdateStock
+<span class="sql-keyword">ON</span> [Order Details]
+<span class="sql-keyword">AFTER INSERT</span>
+<span class="sql-keyword">AS</span>
+<span class="sql-keyword">BEGIN</span>
+    <span class="sql-keyword">UPDATE</span> Products
+    <span class="sql-keyword">SET</span> UnitsInStock = UnitsInStock - i.Quantity
+    <span class="sql-keyword">FROM</span> Products p
+    <span class="sql-keyword">INNER JOIN</span> inserted i <span class="sql-keyword">ON</span> p.ProductID = i.ProductID;
+<span class="sql-keyword">END</span>;</code></pre>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Trigger 2 -->
+                        <div class="trigger-card">
+                            <div class="trigger-header" onclick="toggleTrigger('trigger2')">
+                                <h4>2. Prevención de Eliminación de Órdenes</h4>
+                                <span class="trigger-type">INSTEAD OF DELETE</span>
+                            </div>
+                            <div id="trigger2" class="trigger-body">
+                                <div class="trigger-details">
+                                    <p><strong>Tabla:</strong> Orders</p>
+                                    <p><strong>Propósito:</strong> Evita la eliminación accidental de órdenes para preservar la integridad histórica.</p>
+                                    <p><strong>Lógica:</strong> Intercepta intentos de DELETE y muestra un mensaje en lugar de ejecutar la eliminación.</p>
+                                    <div class="code-block">
+                                        <pre><code><span class="sql-keyword">CREATE TRIGGER</span> trg_PreventDeleteOrder
+<span class="sql-keyword">ON</span> Orders
+<span class="sql-keyword">INSTEAD OF DELETE</span>
+<span class="sql-keyword">AS</span>
+<span class="sql-keyword">BEGIN</span>
+    <span class="sql-function">PRINT</span> <span class="sql-string">'No está permitido eliminar órdenes. Contacte al administrador.'</span>;
+<span class="sql-keyword">END</span>;</code></pre>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Trigger 3 -->
+                        <div class="trigger-card">
+                            <div class="trigger-header" onclick="toggleTrigger('trigger3')">
+                                <h4>3. Auditoría de Cambios de Precios</h4>
+                                <span class="trigger-type">AFTER UPDATE</span>
+                            </div>
+                            <div id="trigger3" class="trigger-body">
+                                <div class="trigger-details">
+                                    <p><strong>Tabla:</strong> Products</p>
+                                    <p><strong>Propósito:</strong> Registra cambios de precio en una tabla de auditoría para rastreo.</p>
+                                    <p><strong>Lógica:</strong> Detecta cambios en UnitPrice y los registra en Products_Audit con fecha y valores antiguo/nuevo.</p>
+                                    <div class="code-block">
+                                        <pre><code><span class="sql-keyword">CREATE TRIGGER</span> trg_AuditPriceChange
+<span class="sql-keyword">ON</span> Products
+<span class="sql-keyword">AFTER UPDATE</span>
+<span class="sql-keyword">AS</span>
+<span class="sql-keyword">BEGIN</span>
+    <span class="sql-keyword">IF</span> <span class="sql-function">UPDATE</span>(UnitPrice)
+    <span class="sql-keyword">BEGIN</span>
+        <span class="sql-keyword">INSERT INTO</span> Products_Audit (ProductID, OldPrice, NewPrice, ChangeDate)
+        <span class="sql-keyword">SELECT</span> d.ProductID, d.UnitPrice, i.UnitPrice, <span class="sql-function">GETDATE</span>()
+        <span class="sql-keyword">FROM</span> deleted d
+        <span class="sql-keyword">JOIN</span> inserted i <span class="sql-keyword">ON</span> d.ProductID = i.ProductID;
+    <span class="sql-keyword">END</span>
+<span class="sql-keyword">END</span>;</code></pre>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Trigger 4 -->
+                        <div class="trigger-card">
+                            <div class="trigger-header" onclick="toggleTrigger('trigger4')">
+                                <h4>4. Validación de Fecha de Envío</h4>
+                                <span class="trigger-type">AFTER INSERT, UPDATE</span>
+                            </div>
+                            <div id="trigger4" class="trigger-body">
+                                <div class="trigger-details">
+                                    <p><strong>Tabla:</strong> Orders</p>
+                                    <p><strong>Propósito:</strong> Garantiza que la fecha de envío nunca sea anterior a la fecha de orden.</p>
+                                    <p><strong>Lógica:</strong> Verifica la consistencia de fechas y revierte la transacción si hay inconsistencia.</p>
+                                    <div class="code-block">
+                                        <pre><code><span class="sql-keyword">CREATE TRIGGER</span> trg_ValidateDates
+<span class="sql-keyword">ON</span> Orders
+<span class="sql-keyword">AFTER INSERT, UPDATE</span>
+<span class="sql-keyword">AS</span>
+<span class="sql-keyword">BEGIN</span>
+    <span class="sql-keyword">IF EXISTS</span> (<span class="sql-keyword">SELECT</span> * <span class="sql-keyword">FROM</span> inserted <span class="sql-keyword">WHERE</span> ShippedDate < OrderDate)
+    <span class="sql-keyword">BEGIN</span>
+        <span class="sql-function">RAISERROR</span>(<span class="sql-string">'La fecha de envío no puede ser anterior a la fecha de la orden.'</span>, 16, 1);
+        <span class="sql-keyword">ROLLBACK TRANSACTION</span>;
+    <span class="sql-keyword">END</span>
+<span class="sql-keyword">END</span>;</code></pre>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Trigger 5 -->
+                        <div class="trigger-card">
+                            <div class="trigger-header" onclick="toggleTrigger('trigger5')">
+                                <h4>5. Estándar en Nombres de Clientes</h4>
+                                <span class="trigger-type">AFTER INSERT, UPDATE</span>
+                            </div>
+                            <div id="trigger5" class="trigger-body">
+                                <div class="trigger-details">
+                                    <p><strong>Tabla:</strong> Customers</p>
+                                    <p><strong>Propósito:</strong> Mantiene uniformidad convirtiendo CompanyName a mayúsculas.</p>
+                                    <p><strong>Lógica:</strong> Actualiza automáticamente el nombre de la empresa a mayúsculas después de insertar o actualizar.</p>
+                                    <div class="code-block">
+                                        <pre><code><span class="sql-keyword">CREATE TRIGGER</span> trg_UpperCaseCustomer
+<span class="sql-keyword">ON</span> Customers
+<span class="sql-keyword">AFTER INSERT, UPDATE</span>
+<span class="sql-keyword">AS</span>
+<span class="sql-keyword">BEGIN</span>
+    <span class="sql-keyword">UPDATE</span> Customers
+    <span class="sql-keyword">SET</span> CompanyName = <span class="sql-function">UPPER</span>(i.CompanyName)
+    <span class="sql-keyword">FROM</span> Customers c
+    <span class="sql-keyword">JOIN</span> inserted i <span class="sql-keyword">ON</span> c.CustomerID = i.CustomerID;
+<span class="sql-keyword">END</span>;</code></pre>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Pubs Triggers -->
+                <div id="pubs-tab" class="tab-content">
+                    <div class="triggers-section">
+                        <!-- Trigger P1 -->
+                        <div class="trigger-card">
+                            <div class="trigger-header" onclick="toggleTrigger('triggerP1')">
+                                <h4>P1. Restricción de Regalías</h4>
+                                <span class="trigger-type">AFTER UPDATE</span>
+                            </div>
+                            <div id="triggerP1" class="trigger-body">
+                                <div class="trigger-details">
+                                    <p><strong>Tabla:</strong> titles</p>
+                                    <p><strong>Propósito:</strong> Evita que el porcentaje de regalías sea disminuido, protegiendo acuerdos contractuales.</p>
+                                    <p><strong>Lógica:</strong> Compara valores antiguos y nuevos de royalty, revierte si hay disminución.</p>
+                                    <div class="code-block">
+                                        <pre><code><span class="sql-keyword">CREATE TRIGGER</span> trg_CheckRoyalty
+<span class="sql-keyword">ON</span> titles
+<span class="sql-keyword">AFTER UPDATE</span>
+<span class="sql-keyword">AS</span>
+<span class="sql-keyword">BEGIN</span>
+    <span class="sql-keyword">IF EXISTS</span> (
+        <span class="sql-keyword">SELECT</span> * 
+        <span class="sql-keyword">FROM</span> inserted i 
+        <span class="sql-keyword">JOIN</span> deleted d <span class="sql-keyword">ON</span> i.title_id = d.title_id
+        <span class="sql-keyword">WHERE</span> i.royalty < d.royalty
+    )
+    <span class="sql-keyword">BEGIN</span>
+        <span class="sql-function">RAISERROR</span>(<span class="sql-string">'No se puede reducir el porcentaje de regalías.'</span>, 16, 1);
+        <span class="sql-keyword">ROLLBACK TRANSACTION</span>;
+    <span class="sql-keyword">END</span>
+<span class="sql-keyword">END</span>;</code></pre>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Trigger P2 -->
+                        <div class="trigger-card">
+                            <div class="trigger-header" onclick="toggleTrigger('triggerP2')">
+                                <h4>P2. Auditoría de Empleados Nuevos</h4>
+                                <span class="trigger-type">AFTER INSERT</span>
+                            </div>
+                            <div id="triggerP2" class="trigger-body">
+                                <div class="trigger-details">
+                                    <p><strong>Tabla:</strong> employee</p>
+                                    <p><strong>Propósito:</strong> Registra automáticamente cada nuevo empleado en una tabla de auditoría.</p>
+                                    <p><strong>Lógica:</strong> Inserta un registro en Employee_Log con la acción y fecha de ingreso.</p>
+                                    <div class="code-block">
+                                        <pre><code><span class="sql-keyword">CREATE TRIGGER</span> trg_NewEmployeeLog
+<span class="sql-keyword">ON</span> employee
+<span class="sql-keyword">AFTER INSERT</span>
+<span class="sql-keyword">AS</span>
+<span class="sql-keyword">BEGIN</span>
+    <span class="sql-keyword">INSERT INTO</span> Employee_Log (EmpID, Action, Date)
+    <span class="sql-keyword">SELECT</span> emp_id, <span class="sql-string">'Nuevo Ingreso'</span>, <span class="sql-function">GETDATE</span>()
+    <span class="sql-keyword">FROM</span> inserted;
+<span class="sql-keyword">END</span>;</code></pre>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Trigger P3 -->
+                        <div class="trigger-card">
+                            <div class="trigger-header" onclick="toggleTrigger('triggerP3')">
+                                <h4>P3. Eliminación en Cascada de Ventas</h4>
+                                <span class="trigger-type">INSTEAD OF DELETE</span>
+                            </div>
+                            <div id="triggerP3" class="trigger-body">
+                                <div class="trigger-details">
+                                    <p><strong>Tabla:</strong> titles</p>
+                                    <p><strong>Propósito:</strong> Elimina ventas asociadas antes de eliminar un título, evitando errores por llaves foráneas.</p>
+                                    <p><strong>Lógica:</strong> Primero elimina registros relacionados en sales, luego elimina el título.</p>
+                                    <div class="code-block">
+                                        <pre><code><span class="sql-keyword">CREATE TRIGGER</span> trg_DeleteTitleSales
+<span class="sql-keyword">ON</span> titles
+<span class="sql-keyword">INSTEAD OF DELETE</span>
+<span class="sql-keyword">AS</span>
+<span class="sql-keyword">BEGIN</span>
+    <span class="sql-keyword">DELETE FROM</span> sales 
+    <span class="sql-keyword">WHERE</span> title_id <span class="sql-keyword">IN</span> (<span class="sql-keyword">SELECT</span> title_id <span class="sql-keyword">FROM</span> deleted);
+
+    <span class="sql-keyword">DELETE FROM</span> titles 
+    <span class="sql-keyword">WHERE</span> title_id <span class="sql-keyword">IN</span> (<span class="sql-keyword">SELECT</span> title_id <span class="sql-keyword">FROM</span> deleted);
+<span class="sql-keyword">END</span>;</code></pre>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Trigger P4 -->
+                        <div class="trigger-card">
+                            <div class="trigger-header" onclick="toggleTrigger('triggerP4')">
+                                <h4>P4. Alerta por Stock Mínimo</h4>
+                                <span class="trigger-type">AFTER INSERT</span>
+                            </div>
+                            <div id="triggerP4" class="trigger-body">
+                                <div class="trigger-details">
+                                    <p><strong>Tabla:</strong> sales</p>
+                                    <p><strong>Propósito:</strong> Genera alerta cuando el stock baja de 10 unidades después de una venta.</p>
+                                    <p><strong>Lógica:</strong> Verifica el stock después de insertar una venta y muestra mensaje de alerta si es bajo.</p>
+                                    <div class="code-block">
+                                        <pre><code><span class="sql-keyword">CREATE TRIGGER</span> trg_StockAlert
+<span class="sql-keyword">ON</span> sales
+<span class="sql-keyword">AFTER INSERT</span>
+<span class="sql-keyword">AS</span>
+<span class="sql-keyword">BEGIN</span>
+    <span class="sql-keyword">IF EXISTS</span> (
+        <span class="sql-keyword">SELECT</span> * 
+        <span class="sql-keyword">FROM</span> titles t
+        <span class="sql-keyword">JOIN</span> inserted i <span class="sql-keyword">ON</span> t.title_id = i.title_id
+        <span class="sql-keyword">WHERE</span> t.stock < 10
+    )
+    <span class="sql-keyword">BEGIN</span>
+        <span class="sql-function">PRINT</span> <span class="sql-string">'ALERTA: El stock ha caído por debajo del mínimo permitido.'</span>;
+    <span class="sql-keyword">END</span>
+<span class="sql-keyword">END</span>;</code></pre>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Trigger P5 -->
+                        <div class="trigger-card">
+                            <div class="trigger-header" onclick="toggleTrigger('triggerP5')">
+                                <h4>P5. Asignación Automática de Fecha de Contratación</h4>
+                                <span class="trigger-type">INSTEAD OF INSERT</span>
+                            </div>
+                            <div id="triggerP5" class="trigger-body">
+                                <div class="trigger-details">
+                                    <p><strong>Tabla:</strong> employee</p>
+                                    <p><strong>Propósito:</strong> Asigna fecha actual si un empleado es insertado sin fecha de contratación.</p>
+                                    <p><strong>Lógica:</strong> Intercepta inserción y asigna GETDATE() si hire_date es NULL.</p>
+                                    <div class="code-block">
+                                        <pre><code><span class="sql-keyword">CREATE TRIGGER</span> trg_DefaultHireDate
+<span class="sql-keyword">ON</span> employee
+<span class="sql-keyword">INSTEAD OF INSERT</span>
+<span class="sql-keyword">AS</span>
+<span class="sql-keyword">BEGIN</span>
+    <span class="sql-keyword">INSERT INTO</span> employee (emp_id, fname, lname, hire_date)
+    <span class="sql-keyword">SELECT</span> emp_id, fname, lname,
+           <span class="sql-function">ISNULL</span>(hire_date, <span class="sql-function">GETDATE</span>())
+    <span class="sql-keyword">FROM</span> inserted;
+<span class="sql-keyword">END</span>;</code></pre>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Conclusions Section -->
+            <section class="card">
+                <h2 class="card-title"><i class="fas fa-check-circle"></i> Conclusiones del Proyecto</h2>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <h4>Automatización Efectiva</h4>
+                        <p>Los triggers demostraron ser herramientas fundamentales para automatizar tareas complejas, reducir errores y hacer cumplir reglas de negocio.</p>
+                    </div>
+                    <div class="info-item">
+                        <h4>Protección de Datos</h4>
+                        <p>Los triggers INSTEAD OF resultaron útiles para proteger información sensible y mantener la integridad referencial.</p>
+                    </div>
+                    <div class="info-item">
+                        <h4>Auditoría y Trazabilidad</h4>
+                        <p>El registro automatizado fortalece los mecanismos de control interno y permite rastrear cambios en los datos críticos.</p>
+                    </div>
+                    <div class="info-item">
+                        <h4>Control de Versiones</h4>
+                        <p>El uso de Git y GitHub permitió mantener un desarrollo ordenado con seguimiento y colaboración efectiva.</p>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <h3>Proyecto Académico - Triggers en Bases de Datos</h3>
+                <div class="project-links">
+                    <a href="#" class="project-link" id="github-link">
+                        <i class="fab fa-github"></i> Repositorio en GitHub
+                    </a>
+                    <a href="#" class="project-link" id="pages-link">
+                        <i class="fas fa-globe"></i> Infografía en GitHub Pages
+                    </a>
+                </div>
+                <p>© 2023 Universidad Andina del Cusco - Facultad de Ingeniería y Arquitectura</p>
+                <p style="margin-top: 10px; font-size: 0.9rem;">Taller 3.4 - Modelado de Base de Datos</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // JavaScript para funcionalidad interactiva
+        
+        // Función para alternar entre pestañas Northwind y Pubs
+        function showTab(tabName) {
+            // Ocultar todas las pestañas y quitar clase active
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Mostrar la pestaña seleccionada
+            document.getElementById(tabName + '-tab').classList.add('active');
+            
+            // Activar la pestaña correspondiente
+            const tabs = document.querySelectorAll('.tab');
+            if (tabName === 'northwind') {
+                tabs[0].classList.add('active');
+            } else {
+                tabs[1].classList.add('active');
+            }
+        }
+        
+        // Función para expandir/contraer detalles del trigger
+        function toggleTrigger(triggerId) {
+            const triggerBody = document.getElementById(triggerId);
+            triggerBody.classList.toggle('active');
+        }
+        
+        // Simular clics en los enlaces del footer
+        document.getElementById('github-link').addEventListener('click', function(e) {
+            e.preventDefault();
+            alert('En un proyecto real, este enlace dirigiría al repositorio de GitHub.\n\nURL del repo: https://github.com/usuario/proyecto-triggers');
+        });
+        
+        document.getElementById('pages-link').addEventListener('click', function(e) {
+            e.preventDefault();
+            alert('En un proyecto real, este enlace dirigiría a la infografía en GitHub Pages.\n\nURL: https://usuario.github.io/proyecto-triggers/');
+        });
+        
+        // Expandir automáticamente el primer trigger de cada base de datos
+        document.addEventListener('DOMContentLoaded', function() {
+            // Expandir el primer trigger de Northwind
+            setTimeout(() => {
+                document.getElementById('trigger1').classList.add('active');
+            }, 500);
+            
+            // Agregar interactividad adicional: resaltar código al pasar el mouse
+            const codeBlocks = document.querySelectorAll('.code-block');
+            codeBlocks.forEach(block => {
+                block.addEventListener('mouseenter', function() {
+                    this.style.transform = 'scale(1.01)';
+                    this.style.transition = 'transform 0.3s';
+                });
+                
+                block.addEventListener('mouseleave', function() {
+                    this.style.transform = 'scale(1)';
+                });
+            });
+            
+            // Efecto de escritura para el título principal
+            const title = document.querySelector('.header-title h1');
+            const originalText = title.textContent;
+            title.textContent = '';
+            let i = 0;
+            
+            function typeWriter() {
+                if (i < originalText.length) {
+                    title.textContent += originalText.charAt(i);
+                    i++;
+                    setTimeout(typeWriter, 50);
+                }
+            }
+            
+            // Iniciar efecto de escritura después de un breve retraso
+            setTimeout(typeWriter, 1000);
+        });
+    </script>
+</body>
+</html>
